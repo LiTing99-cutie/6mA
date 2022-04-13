@@ -267,3 +267,18 @@ multiqc -f  -o output/multiqc_output output/mapping_qc/*clean.txt -n mapping_qc
 	done
 
 	# nohup bash bin/mnase.sh 2> log/run.mnase.T.error.2.log 1> /dev/null &
+
+
+# less /home/user/data/lit/project/6mA/reproduce/mapping/T.thermophila.scaffold.txt | wc -l
+# 1142
+
+# T.thermophila.scf_8253829_Gathering.like_bed
+
+# ls /home/user/data/lit/project/6mA/reproduce/iNPS_output/T.thermophila*_Gathering.like_bed | wc -l
+# 1130
+
+cat /home/user/data/lit/project/6mA/reproduce/iNPS_output/T.thermophila*_Gathering.like_bed | \
+sed '/chromosome=/d;/Chromosome/d' > \
+/home/user/data/lit/project/6mA/reproduce/iNPS_output/T.thermophila_Gathering.like_bed
+
+# sed '/Chromosome/d'|less

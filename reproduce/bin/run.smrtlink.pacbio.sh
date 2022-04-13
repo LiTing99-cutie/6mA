@@ -1,15 +1,16 @@
 ################################################
-#File Name: /home/user/data2/lit/project/6mA/reproduce/bin/run.smrtlink.sh
+#File Name: /home/user/data2/lit/project/6mA/reproduce/bin/run.smrtlink.pacbio.sh
 #Author: LiTing
 #Mail: liting@stu.pku.edu.cn
-#Created Time: Thu 24 Mar 2022 11:08:15 AM CST
+#Created Time: Wed 06 Apr 2022 04:16:50 PM CST
 ################################################
 
 #!/bin/sh 
 
+
 set -eou pipefail
 
-script=/home/user/data2/lit/project/6mA/reproduce/bin/smrtlink.sh
+script=/home/user/data2/lit/project/6mA/reproduce/bin/smrtlink.pacbio.sh
 
 bash ${script} \
 /home/user/data/lit/project/6mA/reproduce/rawdata/Pacbio/bam/Algae.subreads.bam \
@@ -18,4 +19,4 @@ bash ${script} \
 /home/user/data2/lit/project/6mA/reproduce/output/Pacbio/ \
 /home/user/data2/lit/project/6mA/reproduce/log
 
-# nohup bash bin/run.smrtlink.sh &
+# nohup bash /home/user/data2/lit/project/6mA/reproduce/bin/run.smrtlink.pacbio.sh &
