@@ -151,3 +151,77 @@ for sample in $(for i in `seq 1 2`;do echo PC10_LY_MCC-M$i;done);do
 done
 
 # nohup bash run.danpos.n.1_2.sh >> log/danpos/normed/method_1_2/run.log 2>&1 &
+
+
+# add in 20220412
+
+output_dir=/home/user/data/lit/project/6mA/feature/danpos/normed/method_1_2
+mkdir -p $output_dir/merge   
+
+for sample in $(for i in `seq 1 2`;do echo PC10_LY_MCC-M$i;done);do
+    for mA_list in sig_gt_2_fc0_cov10_for_lt_wt1.bed sig_gt_2_fc0_cov10_for_lt_wt2.bed sig_gt_2_fc0_cov10_for_lt_wt1-wt2.bed;do
+        for j in nucleosome;do
+            list_tmp=${mA_list%.*} && list=${list_tmp##*_}
+            cat $output_dir/${sample}.$j.${list}.bin_5.intersect.bed $output_dir/${sample}.$j.${list}.bin_6.intersect.bed > \
+            $output_dir/merge/${sample}.$j.${list}.bin_1.intersect.bed
+            cat $output_dir/${sample}.$j.${list}.bin_4.intersect.bed $output_dir/${sample}.$j.${list}.bin_7.intersect.bed > \
+            $output_dir/merge/${sample}.$j.${list}.bin_2.intersect.bed
+            cat $output_dir/${sample}.$j.${list}.bin_3.intersect.bed $output_dir/${sample}.$j.${list}.bin_8.intersect.bed > \
+            $output_dir/merge/${sample}.$j.${list}.bin_3.intersect.bed
+            cat $output_dir/${sample}.$j.${list}.bin_2.intersect.bed $output_dir/${sample}.$j.${list}.bin_9.intersect.bed > \
+            $output_dir/merge/${sample}.$j.${list}.bin_4.intersect.bed
+            cat $output_dir/${sample}.$j.${list}.bin_1.intersect.bed $output_dir/${sample}.$j.${list}.bin_10.intersect.bed > \
+            $output_dir/merge/${sample}.$j.${list}.bin_5.intersect.bed
+            cat $output_dir/${sample}.$j.bin_5.txt $output_dir/${sample}.$j.bin_6.txt > $output_dir/merge/${sample}.$j.bin_1.txt
+            cat $output_dir/${sample}.$j.bin_4.txt $output_dir/${sample}.$j.bin_7.txt > $output_dir/merge/${sample}.$j.bin_2.txt
+            cat $output_dir/${sample}.$j.bin_3.txt $output_dir/${sample}.$j.bin_8.txt > $output_dir/merge/${sample}.$j.bin_3.txt
+            cat $output_dir/${sample}.$j.bin_2.txt $output_dir/${sample}.$j.bin_9.txt > $output_dir/merge/${sample}.$j.bin_4.txt
+            cat $output_dir/${sample}.$j.bin_1.txt $output_dir/${sample}.$j.bin_10.txt > $output_dir/merge/${sample}.$j.bin_5.txt
+        done    
+    done
+done
+
+for sample in $(for i in `seq 1 2`;do echo PC10_LY_MCC-M$i;done);do
+    for mA_list in sig_gt_2_fc0_cov10_for_lt_wt1.bed sig_gt_2_fc0_cov10_for_lt_wt2.bed sig_gt_2_fc0_cov10_for_lt_wt1-wt2.bed;do
+        for j in linker;do
+            list_tmp=${mA_list%.*} && list=${list_tmp##*_}
+            cat $output_dir/${sample}.$j.${list}.bin_5.intersect.bed $output_dir/${sample}.$j.${list}.bin_6.intersect.bed > \
+            $output_dir/merge/${sample}.$j.${list}.bin_5.intersect.bed
+            cat $output_dir/${sample}.$j.${list}.bin_4.intersect.bed $output_dir/${sample}.$j.${list}.bin_7.intersect.bed > \
+            $output_dir/merge/${sample}.$j.${list}.bin_4.intersect.bed
+            cat $output_dir/${sample}.$j.${list}.bin_3.intersect.bed $output_dir/${sample}.$j.${list}.bin_8.intersect.bed > \
+            $output_dir/merge/${sample}.$j.${list}.bin_3.intersect.bed
+            cat $output_dir/${sample}.$j.${list}.bin_2.intersect.bed $output_dir/${sample}.$j.${list}.bin_9.intersect.bed > \
+            $output_dir/merge/${sample}.$j.${list}.bin_2.intersect.bed
+            cat $output_dir/${sample}.$j.${list}.bin_1.intersect.bed $output_dir/${sample}.$j.${list}.bin_10.intersect.bed > \
+            $output_dir/merge/${sample}.$j.${list}.bin_1.intersect.bed
+            cat $output_dir/${sample}.$j.bin_5.txt $output_dir/${sample}.$j.bin_6.txt > $output_dir/merge/${sample}.$j.bin_5.txt
+            cat $output_dir/${sample}.$j.bin_4.txt $output_dir/${sample}.$j.bin_7.txt > $output_dir/merge/${sample}.$j.bin_4.txt
+            cat $output_dir/${sample}.$j.bin_3.txt $output_dir/${sample}.$j.bin_8.txt > $output_dir/merge/${sample}.$j.bin_3.txt
+            cat $output_dir/${sample}.$j.bin_2.txt $output_dir/${sample}.$j.bin_9.txt > $output_dir/merge/${sample}.$j.bin_2.txt
+            cat $output_dir/${sample}.$j.bin_1.txt $output_dir/${sample}.$j.bin_10.txt > $output_dir/merge/${sample}.$j.bin_1.txt
+        done    
+    done
+done
+
+output_dir=/home/user/data/lit/project/6mA/feature/danpos/normed/method_1_2/merge
+[ -f $output_dir/binned.level.txt ] && rm -rf $output_dir/binned.level.txt
+for sample in $(for i in `seq 1 2`;do echo PC10_LY_MCC-M$i;done);do
+    for mA_list in sig_gt_2_fc0_cov10_for_lt_wt1.bed sig_gt_2_fc0_cov10_for_lt_wt2.bed sig_gt_2_fc0_cov10_for_lt_wt1-wt2.bed;do
+        for j in nucleosome linker;do
+            for i in `seq 1 5`;do
+                list_tmp=${mA_list%.*} && list=${list_tmp##*_}
+                mA=`less $output_dir/${sample}.$j.${list}.bin_$i.intersect.bed | wc -l`
+                A=` sed '1d' $output_dir/${sample}.$j.bin_$i.txt | awk '{sum += $7} END {print sum}' `
+                C=` sed '1d' $output_dir/${sample}.$j.bin_$i.txt | awk '{sum += $8} END {print sum}' `
+                G=` sed '1d' $output_dir/${sample}.$j.bin_$i.txt | awk '{sum += $9} END {print sum}' `
+                T=` sed '1d' $output_dir/${sample}.$j.bin_$i.txt | awk '{sum += $10} END {print sum}' `
+                base_number=` sed '1d' $output_dir/${sample}.$j.bin_$i.txt | awk '{sum += $13} END {print sum}' `
+                AT=` sed '1d' $output_dir/${sample}.$j.bin_$i.txt | awk '{sum += $5} END {print sum/NR}' `
+                GC=` sed '1d' $output_dir/${sample}.$j.bin_$i.txt | awk '{sum += $6} END {print sum/NR}' `
+                FreqSum=`less $output_dir/${sample}.$j.${list}.bin_$i.intersect.bed | awk '{sum += $8} END {print sum}'`
+                echo -e "${sample}\t$j\t${list}\tbin_$i\t${mA}\t${A}\t${C}\t${G}\t${T}\t${base_number}\t${AT}\t${GC}\t${FreqSum}" >> $output_dir/binned.level.txt
+            done
+        done 
+    done
+done
