@@ -9,3 +9,4 @@
 
 set -eou pipefail
 echo "hello,world"
+echo "today is a beautiful day"
