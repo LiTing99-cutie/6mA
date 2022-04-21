@@ -110,3 +110,5 @@
 # binned.sh first, then binned_level.sh
 
 /home/user/data2/lit/project/6mA/bin/run.binned_level.sh
+
+# sed 's/chr//g;s/M/MtDNA/g' on mA list 

@@ -1,0 +1,2528 @@
+---
+title: "6mA motif feature statistics"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# method 1
+```{r show as science paper 146bp nucleosome and its complement}
+visual_method_1 <- function(binned_level_dir) {
+  binned_level <- read.table(paste0(binned_level_dir,"binned.level.txt"))
+  binned_level$V1 %>% str_split_fixed(., "\\.", 2) %>% data.frame() %>% mutate(binned_level) %>%
+    set_names("sample", "bin", "sample.bin", "mA", "A", "FreqSum") -> binned_level.input
+  
+  p <- binned_level.input %>%
+    ggplot(mapping = aes(
+      x = factor(
+        bin,
+        levels = c(
+          "nucleosome.bin_1",
+          "nucleosome.bin_2",
+          "nucleosome.bin_3",
+          "nucleosome.bin_4",
+          "nucleosome.bin_5",
+          "linker.bin_1",
+          "linker.bin_2",
+          "linker.bin_3",
+          "linker.bin_4",
+          "linker.bin_5"
+        )
+      ),
+      y = mA,
+      color = sample,
+      group = sample
+    )) +
+    geom_line() +
+    geom_point() +
+    theme(axis.text.x = element_text(hjust = 1, angle = 45),
+          axis.title.x = element_blank()) +
+    ylab("6mA")
+  
+  print(p)
+  
+  ggsave(
+    p,
+    filename = paste0(binned_level_dir, "binned_level_6mA.png"),
+    width = 5,
+    height = 3
+  )
+  
+  p <- binned_level.input %>%
+    ggplot(mapping = aes(
+      x = factor(
+        bin,
+        levels = c(
+          "nucleosome.bin_1",
+          "nucleosome.bin_2",
+          "nucleosome.bin_3",
+          "nucleosome.bin_4",
+          "nucleosome.bin_5",
+          "linker.bin_1",
+          "linker.bin_2",
+          "linker.bin_3",
+          "linker.bin_4",
+          "linker.bin_5"
+        )
+      ),
+      y = mA / A,
+      color = sample,
+      group = sample
+    )) +
+    geom_line() +
+    geom_point() +
+    theme(axis.text.x = element_text(hjust = 1, angle = 45),
+          axis.title.x = element_blank()) +
+    ylab("6mA/A") +
+    theme(legend.key.size = unit(0.2, "pt"))
+  
+  ggsave(p,
+         filename = paste0(binned_level_dir,"binned_level_6mA2A.png"),
+         width = 5,
+         height = 3)
+  
+  print(p)
+  
+  p <- binned_level.input %>%
+    ggplot(mapping = aes(
+      x = factor(
+        bin,
+        levels = c(
+          "nucleosome.bin_1",
+          "nucleosome.bin_2",
+          "nucleosome.bin_3",
+          "nucleosome.bin_4",
+          "nucleosome.bin_5",
+          "linker.bin_1",
+          "linker.bin_2",
+          "linker.bin_3",
+          "linker.bin_4",
+          "linker.bin_5"
+        )
+      ),
+      y = FreqSum / A,
+      color = sample,
+      group = sample
+    )) +
+    geom_line() +
+    geom_point() +
+    theme(axis.text.x = element_text(hjust = 1, angle = 45),
+          axis.title.x = element_blank()) +
+    ylab("FreqSum/A") +
+    theme(legend.key.size = unit(0.2, "pt"))
+  
+  print(p)
+  
+  ggsave(p,
+         filename = paste0(binned_level_dir,"binned_level_FreqSum.png"),
+         width = 5,
+         height = 3)
+  
+}
+
+visual_method_1("/home/user/data/lit/project/6mA/feature/iNPS/method_1/")
+
+visual_method_1("/home/user/data/lit/project/6mA/feature/danpos/original/method_1/")
+
+visual_method_1("/home/user/data/lit/project/6mA/feature/danpos/normed/method_1/")
+
+```
+
+```{r compare methods and merge samples }
+visual_method_merge <- function(binned_level_dir_1,binned_level_dir_2,binned_level_dir_3) {
+  
+  get_level_input <- function(binned_level_dir) {
+    binned_level <-
+      read.table(paste0(binned_level_dir, "binned.level.txt"))
+    binned_level$V1 %>% str_split_fixed(., "\\.", 2) %>% data.frame() %>% mutate(binned_level) %>%
+      set_names("sample", "bin", "sample.bin", "mA", "A", "FreqSum") -> binned_level.input
+    return(binned_level.input)
+  }
+  
+  binned_level.input <- rbind(get_level_input(binned_level_dir_1) %>% mutate(method="iNPS"),
+                              get_level_input(binned_level_dir_2) %>% mutate(method="danpos"),
+                              get_level_input(binned_level_dir_3) %>% mutate(method="danpos_normed"))
+  
+  binned_level.input %>% group_by(bin, method) %>% summarise(mA = mean(mA),
+                                                             A = mean(A),
+                                                             FreqSum = mean(FreqSum)) -> binned_level.input.merge
+  
+  p <-
+    binned_level.input %>% dplyr::filter(sample == "PC10_LY_MCC-M1") %>%
+    ggplot(mapping = aes(
+      x = factor(
+        bin,
+        levels = c(
+          "nucleosome.bin_1",
+          "nucleosome.bin_2",
+          "nucleosome.bin_3",
+          "nucleosome.bin_4",
+          "nucleosome.bin_5",
+          "linker.bin_1",
+          "linker.bin_2",
+          "linker.bin_3",
+          "linker.bin_4",
+          "linker.bin_5"
+        )
+      ),
+      y = mA / A,
+      color = method,
+      group = method
+    )) +
+    geom_line() +
+    geom_point() +
+    theme(axis.text.x = element_text(hjust = 1, angle = 45),
+          axis.title.x = element_blank()) +
+    ylab("6mA/A") +
+    ggtitle("sample PC10_LY_MCC-M1") +
+    theme(plot.title = element_text(hjust = 0.5))
+  theme(legend.key.size = unit(0.2, "pt"))
+  
+  print(p)
+  
+  p <-
+    binned_level.input %>% dplyr::filter(sample == "PC10_LY_MCC-M2") %>%
+    ggplot(mapping = aes(
+      x = factor(
+        bin,
+        levels = c(
+          "nucleosome.bin_1",
+          "nucleosome.bin_2",
+          "nucleosome.bin_3",
+          "nucleosome.bin_4",
+          "nucleosome.bin_5",
+          "linker.bin_1",
+          "linker.bin_2",
+          "linker.bin_3",
+          "linker.bin_4",
+          "linker.bin_5"
+        )
+      ),
+      y = mA / A,
+      color = method,
+      group = method
+    )) +
+    geom_line() +
+    geom_point() +
+    theme(axis.text.x = element_text(hjust = 1, angle = 45),
+          axis.title.x = element_blank()) +
+    ylab("6mA/A") +
+    ggtitle("sample PC10_LY_MCC-M2") +
+    theme(plot.title = element_text(hjust = 0.5))
+  theme(legend.key.size = unit(0.2, "pt"))
+  
+  print(p)
+  
+  p <-
+    binned_level.input.merge %>% 
+    ggplot(mapping = aes(
+      x = factor(
+        bin,
+        levels = c(
+          "nucleosome.bin_1",
+          "nucleosome.bin_2",
+          "nucleosome.bin_3",
+          "nucleosome.bin_4",
+          "nucleosome.bin_5",
+          "linker.bin_1",
+          "linker.bin_2",
+          "linker.bin_3",
+          "linker.bin_4",
+          "linker.bin_5"
+        )
+      ),
+      y = mA / A,
+      color = method,
+      group = method
+    )) +
+    geom_line() +
+    geom_point() +
+    theme(axis.text.x = element_text(hjust = 1, angle = 45),
+          axis.title.x = element_blank()) +
+    ylab("6mA/A") +
+    ggtitle("sample mean") +
+    theme(plot.title = element_text(hjust = 0.5))
+  theme(legend.key.size = unit(0.2, "pt"))
+  
+  print(p)
+  
+  ggsave(p,
+         filename = paste0("binned_level_6mA2A.method_1.png"),
+         width = 5,
+         height = 3)
+}
+
+
+visual_method_merge("/home/user/data/lit/project/6mA/feature/iNPS/method_1/",
+                    "/home/user/data/lit/project/6mA/feature/danpos/original/method_1/",
+                    "/home/user/data/lit/project/6mA/feature/danpos/normed/method_1/")
+
+```
+
+```{r consistency between different mA list}
+{
+ binned_level <- read.table("/home/user/data/lit/project/6mA/feature/iNPS/method_1/binned.level.txt")
+  binned_level$V1 %>% str_split_fixed(., "\\.", 2) %>% data.frame() %>% mutate(binned_level) %>%
+    set_names("sample", "bin", "sample.bin", "mA", "A", "FreqSum") -> binned_level.input
+  
+  
+   p <-
+    binned_level.input %>% 
+    ggplot(mapping = aes(
+      x = factor(
+        bin,
+        levels = c(
+          "nucleosome.bin_1",
+          "nucleosome.bin_2",
+          "nucleosome.bin_3",
+          "nucleosome.bin_4",
+          "nucleosome.bin_5",
+          "linker.bin_1",
+          "linker.bin_2",
+          "linker.bin_3",
+          "linker.bin_4",
+          "linker.bin_5"
+        )
+      ),
+      y = mA / A,
+      color = sample,
+      group = sample
+    )) +
+    geom_line() +
+    geom_point() +
+    theme(axis.text.x = element_text(hjust = 1, angle = 45),
+          axis.title.x = element_blank()) +
+    ylab("6mA/A") +
+    ggtitle("List_1") +
+    theme(plot.title = element_text(hjust = 0.5))
+  theme(legend.key.size = unit(0.2, "pt"))
+  
+  print(p)
+  
+  ggsave(p,
+         filename = paste0("binned_level_6mA2A.list_1.png"),
+         width = 5,
+         height = 3)
+}
+{
+ binned_level <- read.table("./binned.level.list_1.txt")
+  binned_level$V1 %>% str_split_fixed(., "\\.", 2) %>% data.frame() %>% mutate(binned_level) %>%
+    set_names("sample", "bin", "sample.bin", "mA", "A", "FreqSum") -> binned_level.input
+  
+  
+   p <-
+    binned_level.input %>% 
+    ggplot(mapping = aes(
+      x = factor(
+        bin,
+        levels = c(
+          "nucleosome.bin_1",
+          "nucleosome.bin_2",
+          "nucleosome.bin_3",
+          "nucleosome.bin_4",
+          "nucleosome.bin_5",
+          "linker.bin_1",
+          "linker.bin_2",
+          "linker.bin_3",
+          "linker.bin_4",
+          "linker.bin_5"
+        )
+      ),
+      y = mA / A,
+      color = sample,
+      group = sample
+    )) +
+    geom_line() +
+    geom_point() +
+    theme(axis.text.x = element_text(hjust = 1, angle = 45),
+          axis.title.x = element_blank()) +
+    ylab("6mA/A") +
+    ggtitle("List_2") +
+    theme(plot.title = element_text(hjust = 0.5))
+  theme(legend.key.size = unit(0.2, "pt"))
+  
+  print(p)
+  
+  ggsave(p,
+         filename = paste0("binned_level_6mA2A.list_2.png"),
+         width = 5,
+         height = 3)
+}
+{
+ binned_level <- read.table("./binned.level.list_2.txt")
+  binned_level$V1 %>% str_split_fixed(., "\\.", 2) %>% data.frame() %>% mutate(binned_level) %>%
+    set_names("sample", "bin", "sample.bin", "mA", "A", "FreqSum") -> binned_level.input
+  
+  
+   p <-
+    binned_level.input %>% 
+    ggplot(mapping = aes(
+      x = factor(
+        bin,
+        levels = c(
+          "nucleosome.bin_1",
+          "nucleosome.bin_2",
+          "nucleosome.bin_3",
+          "nucleosome.bin_4",
+          "nucleosome.bin_5",
+          "linker.bin_1",
+          "linker.bin_2",
+          "linker.bin_3",
+          "linker.bin_4",
+          "linker.bin_5"
+        )
+      ),
+      y = mA / A,
+      color = sample,
+      group = sample
+    )) +
+    geom_line() +
+    geom_point() +
+    theme(axis.text.x = element_text(hjust = 1, angle = 45),
+          axis.title.x = element_blank()) +
+    ylab("6mA/A") +
+    ggtitle("List_1 && List_2") +
+    theme(plot.title = element_text(hjust = 0.5))
+  theme(legend.key.size = unit(0.2, "pt"))
+  
+  print(p)
+  
+  ggsave(p,
+         filename = paste0("binned_level_6mA2A.list_merge.png"),
+         width = 5,
+         height = 3)
+}
+```
+
+# method 1_2
+
+```{r show 10 bins each nucleosome and linker}
+
+visual_method <- function(binned_level_dir,list,variable){
+binned_level.input <-
+read.table(paste0(binned_level_dir, "binned.level.txt")) %>% 
+set_names("sample", "type", "list", "bin", "mA", "A","C","G","T","base_number","AT","GC","FreqSum") %>% dplyr::filter(list==!!list) %>% mutate(type.bin=paste0(type,".",bin)) %>% 
+  mutate("mA/A"=mA/A,"mA/(A+T)"=mA/(A+T),"FreqSum/(A+T)"=FreqSum/(A+T),"FreqSum/A"=FreqSum/A,"base_sum"=A+T+G+C) %>% mutate("GC(%)"=(G+C)/base_sum,"AT(%)"=(A+T)/base_sum) 
+
+read.table(paste0(binned_level_dir, "binned.level.txt")) %>% 
+set_names("sample", "type", "list", "bin", "mA", "A","C","G","T","base_number","AT","GC","FreqSum") %>% group_by(type, list,bin) %>% summarise(mA = sum(mA),A = sum(A),T=sum(T),G=sum(G),C=sum(C),base_number=sum(base_number)) %>% dplyr::filter(list==!!list) %>% mutate(type.bin=paste0(type,".",bin)) %>% 
+  mutate("mA/A"=mA/A,"mA/(A+T)"=mA/(A+T),"base_sum"=A+T+G+C) %>% mutate("GC(%)"=(G+C)/base_sum,"AT(%)"=(A+T)/base_sum) -> binned_level.input.merge
+
+
+name_boom <- function(fixname, seq) {
+  name_all = NULL
+  for (i in seq) {
+    name = paste0(fixname, i)
+    name_all = c(name_all, name)
+  }
+  return(name_all)
+}
+
+extract_bin <- function(x){
+  str_split(x,"\\.",simplify = TRUE)[,2]
+  }
+
+p <- binned_level.input %>%
+ggplot(mapping = aes(
+  x = factor(type.bin,levels = c(
+    # name_boom("linker.bin_", seq(1, 5)),
+    name_boom("nucleosome.bin_", seq(1, 10)),
+    # name_boom("linker.bin_", seq(6,10))
+    name_boom("linker.bin_", seq(1,10))
+  )),
+  y = !!variable,
+  color = sample,
+  group = sample
+)) +
+geom_line(size=1) +
+scale_color_manual(values=c("#ef858c","#5ea9d7"))+
+# geom_point() +
+theme(axis.text.x = element_text(hjust = 1, angle = 45),
+      axis.title.x = element_blank()) +
+ylab(paste0(variable))+
+   theme(
+    panel.grid = element_blank(),
+    # panel.background = element_rect(fill = 'transparent', color = 'black'),
+    panel.background = element_rect(fill = 'transparent', color = 'white'),
+    # panel.border = element_rect(fill = 'transparent', color = 'black'),
+    axis.line = element_line(colour = "black"),
+    plot.title = element_text(hjust = 0.5),
+    axis.title=element_text(face = "bold",size = 10),
+    axis.text = element_text(face = "bold", size = 10),
+    legend.text = element_text(face = "bold"),
+    legend.title = element_text(face = "bold")
+  )+
+  scale_x_discrete(labels=extract_bin)+
+geom_vline(xintercept = c("nucleosome.bin_10","linker.bin_1"), linetype = "dotdash")
+
+print(p)
+
+p <- binned_level.input.merge %>%
+ggplot(mapping = aes(
+  x = factor(type.bin,levels = c(
+    name_boom("nucleosome.bin_", seq(1, 10)),
+    name_boom("linker.bin_", seq(1,10))
+  )),
+  y = !!variable,
+  group=1
+)) +
+geom_line(size=1,color="#ef858c") +
+# geom_point() +
+theme(axis.text.x = element_text(hjust = 1, angle = 45),
+      axis.title.x = element_blank()) +
+ylab(paste0(variable))+
+   theme(
+    panel.grid = element_blank(),
+    # panel.background = element_rect(fill = 'transparent', color = 'black'),
+    panel.background = element_rect(fill = 'transparent', color = 'white'),
+    # panel.border = element_rect(fill = 'transparent', color = 'black'),
+    axis.line = element_line(colour = "black"),
+    plot.title = element_text(hjust = 0.5),
+    axis.title=element_text(face = "bold",size = 10),
+    axis.text = element_text(face = "bold", size = 10),
+    legend.text = element_text(face = "bold"),
+    legend.title = element_text(face = "bold")
+  )+
+  scale_x_discrete(labels=extract_bin)+
+geom_vline(xintercept = c("nucleosome.bin_10","linker.bin_1"), linetype = "dotdash")
+
+print(p)
+}
+
+
+# visual_method("/home/user/data/lit/project/6mA/feature/danpos/normed/C.elegans/","SMRT-list-SMRT-1",sym("GC(%)"))
+# visual_method("/home/user/data/lit/project/6mA/feature/danpos/normed/C.elegans/","SMRT-list-SMRT-1",sym("mA/(A+T)"))
+# visual_method("/home/user/data/lit/project/6mA/feature/danpos/normed/C.elegans/","correct-strand-1",sym("mA/(A+T)"))
+# visual_method("/home/user/data/lit/project/6mA/feature/danpos/normed/C.elegans/","correct-strand-2",sym("mA/(A+T)"))
+# visual_method("/home/user/data/lit/project/6mA/feature/danpos/normed/C.elegans/","correct-strand-3",sym("mA/(A+T)"))
+
+
+visual_method <- function(binned_level_dir,list,variable){
+# binned_level.input <-
+# read.table(paste0(binned_level_dir, "binned.level.txt")) %>% 
+# set_names("sample", "type", "list", "bin", "mA", "A","C","G","T","base_number","AT","GC","FreqSum") %>% dplyr::filter(list==!!list) %>% mutate(type.bin=paste0(type,".",bin)) %>% 
+#   mutate("mA/A"=mA/A,"mA/(A+T)"=mA/(A+T),"FreqSum/(A+T)"=FreqSum/(A+T),"FreqSum/A"=FreqSum/A,"base_sum"=A+T+G+C) %>% mutate("GC(%)"=(G+C)/base_sum,"AT(%)"=(A+T)/base_sum) 
+
+binned_level.input <-
+read.table(paste0(binned_level_dir, "binned.level.txt")) %>% 
+set_names("sample", "type", "list", "bin", "mA", "A","C","G","T","base_number","AT","GC","FreqSum") %>% dplyr::filter(list==!!list) %>% mutate(type.bin=paste0(type,".",bin)) %>% 
+  mutate("mA/A"=mA/A*10^6,"mA/(A+T)"=mA/(A+T)*10^6,"FreqSum/(A+T)"=FreqSum/(A+T)*10^6,"FreqSum/A"=FreqSum/A*10^6,"base_sum"=A+T+G+C) %>% mutate("GC(%)"=(G+C)/base_sum,"AT(%)"=(A+T)/base_sum) 
+
+# read.table(paste0(binned_level_dir, "binned.level.txt")) %>%
+# set_names("sample", "type", "list", "bin", "mA", "A","C","G","T","base_number","AT","GC","FreqSum") %>% group_by(type, list,bin) %>% summarise(mA = sum(mA),A = sum(A),T=sum(T),G=sum(G),C=sum(C),base_number=sum(base_number),FreqSum=sum(FreqSum)) %>% dplyr::filter(list==!!list) %>% mutate(type.bin=paste0(type,".",bin)) %>%
+#   mutate("mA/A"=mA/A,"mA/(A+T)"=mA/(A+T),"FreqSum/(A+T)"=FreqSum/(A+T),"FreqSum/A"=FreqSum/A,"base_sum"=A+T+G+C) %>% mutate("GC(%)"=(G+C)/base_sum,"AT(%)"=(A+T)/base_sum)-> binned_level.input.merge
+
+read.table(paste0(binned_level_dir, "binned.level.txt")) %>%
+set_names("sample", "type", "list", "bin", "mA", "A","C","G","T","base_number","AT","GC","FreqSum") %>% group_by(type, list,bin) %>% summarise(mA = sum(mA),A = sum(A),T=sum(T),G=sum(G),C=sum(C),base_number=sum(base_number),FreqSum=sum(FreqSum)) %>% dplyr::filter(list==!!list) %>% mutate(type.bin=paste0(type,".",bin)) %>%
+  mutate("mA/A"=mA/A*10^6,"mA/(A+T)"=mA/(A+T)*10^6,"FreqSum/(A+T)"=FreqSum/(A+T)*10^6,"FreqSum/A"=FreqSum/A*10^6,"base_sum"=A+T+G+C) %>% mutate("GC(%)"=(G+C)/base_sum,"AT(%)"=(A+T)/base_sum)-> binned_level.input.merge
+
+name_boom <- function(fixname, seq) {
+  name_all = NULL
+  for (i in seq) {
+    name = paste0(fixname, i)
+    name_all = c(name_all, name)
+  }
+  return(name_all)
+}
+
+extract_bin <- function(x){
+  str_split(x,"\\.",simplify = TRUE)[,2]
+  }
+
+# p <- binned_level.input %>%
+# ggplot(mapping = aes(
+#   x = factor(type.bin,levels = c(
+#     name_boom("nucleosome.bin_", seq(1, 5)),
+#     name_boom("linker.bin_", seq(1,5))
+#   )),
+#   y = !!variable,
+#   color = sample,
+#   group = sample
+# )) +
+# geom_line(size=1) +
+# scale_color_manual(values=c("#ef858c","#5ea9d7"))+
+# # geom_point() +
+# theme(axis.text.x = element_text(hjust = 1, angle = 45),
+#       axis.title.x = element_blank()) +
+# ylab(paste0(variable))+
+#    theme(
+#     panel.grid = element_blank(),
+#     # panel.background = element_rect(fill = 'transparent', color = 'black'),
+#     panel.background = element_rect(fill = 'transparent', color = 'white'),
+#     # panel.border = element_rect(fill = 'transparent', color = 'black'),
+#     axis.line = element_line(colour = "black"),
+#     plot.title = element_text(hjust = 0.5),
+#     axis.title=element_text(face = "bold",size = 10),
+#     axis.text = element_text(face = "bold", size = 10),
+#     legend.text = element_text(face = "bold"),
+#     legend.title = element_text(face = "bold")
+#   )+
+#   scale_x_discrete(labels=extract_bin)+
+# geom_vline(xintercept = c("nucleosome.bin_5","linker.bin_1"), linetype = "dotdash")
+# 
+# print(p)
+
+
+p <- binned_level.input.merge %>%
+ggplot(mapping = aes(
+  x = factor(type.bin,levels = c(
+    name_boom("nucleosome.bin_", seq(1, 5)),
+    name_boom("linker.bin_", seq(1,5))
+  )),
+  y = !!variable,
+  group=1
+)) +
+geom_line(size=1,color="#ef858c") +
+# geom_point() +
+theme(axis.text.x = element_text(hjust = 1, angle = 45),
+      axis.title.x = element_blank()) +
+ylab(paste0(variable))+
+   theme(
+    panel.grid = element_blank(),
+    # panel.background = element_rect(fill = 'transparent', color = 'black'),
+    panel.background = element_rect(fill = 'transparent', color = 'white'),
+    # panel.border = element_rect(fill = 'transparent', color = 'black'),
+    axis.line = element_line(colour = "black"),
+    plot.title = element_text(hjust = 0.5),
+    axis.title=element_text(face = "bold",size = 10),
+    axis.text = element_text(face = "bold", size = 10),
+    legend.text = element_text(face = "bold"),
+    legend.title = element_text(face = "bold")
+  )+
+  scale_x_discrete(labels=extract_bin)+
+geom_vline(xintercept = c("nucleosome.bin_5","linker.bin_1"), linetype = "dotdash")+
+  ylim(20,80)
+
+print(p)
+}
+
+
+
+# visual_method("/home/user/data/lit/project/6mA/feature/danpos/normed/C.elegans/merge/","SMRT-list-SMRT-1",sym("GC(%)"))
+# visual_method("/home/user/data/lit/project/6mA/feature/danpos/normed/C.elegans/merge/","SMRT-list-SMRT-1",sym("mA/(A+T)"))
+visual_method("/home/user/data/lit/project/6mA/feature/danpos/normed/C.elegans/merge/","correct-strand-1",sym("mA/(A+T)"))
+visual_method("/home/user/data/lit/project/6mA/feature/danpos/normed/C.elegans/merge/","correct-strand-2",sym("mA/(A+T)"))
+visual_method("/home/user/data/lit/project/6mA/feature/danpos/normed/C.elegans/merge/","correct-strand-1",sym("mA/A"))
+visual_method("/home/user/data/lit/project/6mA/feature/danpos/normed/C.elegans/merge/","correct-strand-2",sym("mA/A"))
+visual_method("/home/user/data/lit/project/6mA/feature/danpos/normed/C.elegans/merge/","correct-strand-1",sym("FreqSum/(A+T)"))
+visual_method("/home/user/data/lit/project/6mA/feature/danpos/normed/C.elegans/merge/","correct-strand-2",sym("FreqSum/(A+T)"))
+visual_method("/home/user/data/lit/project/6mA/feature/danpos/normed/C.elegans/merge/","correct-strand-1",sym("FreqSum/A"))
+visual_method("/home/user/data/lit/project/6mA/feature/danpos/normed/C.elegans/merge/","correct-strand-2",sym("FreqSum/A"))
+# visual_method("/home/user/data/lit/project/6mA/feature/danpos/normed/C.elegans/merge/","correct-strand-3",sym("mA/(A+T)"))
+
+```
+
+```{r show 10 bins each nucleosome and linker}
+
+bin_number=10
+
+visual_method <- function(binned_level_dir,list,variable){
+# binned_level.input <-
+# read.table(paste0(binned_level_dir, "binned.level.txt")) %>% 
+# set_names("sample", "type", "list", "bin", "mA", "A","C","G","T","base_number","AT","GC","FreqSum") %>% dplyr::filter(list==!!list) %>% mutate(type.bin=paste0(type,".",bin)) %>% 
+#   mutate("mA/A"=mA/A,"mA/(A+T)"=mA/(A+T),"FreqSum/(A+T)"=FreqSum/(A+T),"FreqSum/A"=FreqSum/A,"base_sum"=A+T+G+C) %>% mutate("GC(%)"=(G+C)/base_sum,"AT(%)"=(A+T)/base_sum) 
+
+binned_level.input <-
+read.table(paste0(binned_level_dir, "binned.level.txt")) %>% 
+set_names("sample", "type", "list", "bin", "mA", "A","C","G","T","base_number","AT","GC","FreqSum") %>% dplyr::filter(list==!!list) %>% mutate(type.bin=paste0(type,".",bin)) %>% 
+  mutate("mA/A"=mA/A*10^6,"mA/(A+T)"=mA/(A+T)*10^6,"FreqSum/(A+T)"=FreqSum/(A+T)*10^6,"FreqSum/A"=FreqSum/A*10^6,"base_sum"=A+T+G+C) %>% mutate("GC(%)"=(G+C)/base_sum,"AT(%)"=(A+T)/base_sum) 
+
+# read.table(paste0(binned_level_dir, "binned.level.txt")) %>%
+# set_names("sample", "type", "list", "bin", "mA", "A","C","G","T","base_number","AT","GC","FreqSum") %>% group_by(type, list,bin) %>% summarise(mA = sum(mA),A = sum(A),T=sum(T),G=sum(G),C=sum(C),base_number=sum(base_number),FreqSum=sum(FreqSum)) %>% dplyr::filter(list==!!list) %>% mutate(type.bin=paste0(type,".",bin)) %>%
+#   mutate("mA/A"=mA/A,"mA/(A+T)"=mA/(A+T),"FreqSum/(A+T)"=FreqSum/(A+T),"FreqSum/A"=FreqSum/A,"base_sum"=A+T+G+C) %>% mutate("GC(%)"=(G+C)/base_sum,"AT(%)"=(A+T)/base_sum)-> binned_level.input.merge
+
+read.table(paste0(binned_level_dir, "binned.level.txt")) %>%
+set_names("sample", "type", "list", "bin", "mA", "A","C","G","T","base_number","AT","GC","FreqSum") %>% group_by(type, list,bin) %>% summarise(mA = sum(mA),A = sum(A),T=sum(T),G=sum(G),C=sum(C),base_number=sum(base_number),FreqSum=sum(FreqSum)) %>% dplyr::filter(list==!!list) %>% mutate(type.bin=paste0(type,".",bin)) %>%
+  mutate("mA/A"=mA/A*10^6,"mA/(A+T)"=mA/(A+T)*10^6,"FreqSum/(A+T)"=FreqSum/(A+T)*10^6,"FreqSum/A"=FreqSum/A*10^6,"base_sum"=A+T+G+C) %>% mutate("GC(%)"=(G+C)/base_sum,"AT(%)"=(A+T)/base_sum)-> binned_level.input.merge
+
+
+name_boom <- function(fixname, seq) {
+  name_all = NULL
+  for (i in seq) {
+    name = paste0(fixname, i)
+    name_all = c(name_all, name)
+  }
+  return(name_all)
+}
+
+extract_bin <- function(x){
+  str_split(x,"\\.",simplify = TRUE)[,2]
+  }
+
+# p <- binned_level.input %>%
+# ggplot(mapping = aes(
+#   x = factor(type.bin,levels = c(
+#     name_boom("nucleosome.bin_", seq(1, bin_number)),
+#     name_boom("linker.bin_", seq(1,bin_number))
+#   )),
+#   y = !!variable,
+#   color = sample,
+#   group = sample
+# )) +
+# geom_line(size=1) +
+# scale_color_manual(values=c("#ef858c","#5ea9d7"))+
+# # geom_point() +
+# theme(axis.text.x = element_text(hjust = 1, angle = 45),
+#       axis.title.x = element_blank()) +
+# ylab(paste0(variable))+
+#    theme(
+#     panel.grid = element_blank(),
+#     # panel.background = element_rect(fill = 'transparent', color = 'black'),
+#     panel.background = element_rect(fill = 'transparent', color = 'white'),
+#     # panel.border = element_rect(fill = 'transparent', color = 'black'),
+#     axis.line = element_line(colour = "black"),
+#     plot.title = element_text(hjust = 0.5),
+#     axis.title=element_text(face = "bold",size = 10),
+#     axis.text = element_text(face = "bold", size = 10),
+#     legend.text = element_text(face = "bold"),
+#     legend.title = element_text(face = "bold")
+#   )+
+#   scale_x_discrete(labels=extract_bin)+
+# geom_vline(xintercept = c(paste0("nucleosome.bin_",bin_number),"linker.bin_1"), linetype = "dotdash")
+# 
+# print(p)
+
+p <- binned_level.input.merge %>%
+ggplot(mapping = aes(
+  x = factor(type.bin,levels = c(
+    name_boom("nucleosome.bin_", seq(1, bin_number)),
+    name_boom("linker.bin_", seq(1,bin_number))
+  )),
+  y = !!variable,
+  group=1
+)) +
+geom_line(size=1,color="#ef858c") +
+# geom_point() +
+theme(axis.text.x = element_text(hjust = 1, angle = 45),
+      axis.title.x = element_blank()) +
+ylab(paste0(variable))+
+   theme(
+    panel.grid = element_blank(),
+    # panel.background = element_rect(fill = 'transparent', color = 'black'),
+    panel.background = element_rect(fill = 'transparent', color = 'white'),
+    # panel.border = element_rect(fill = 'transparent', color = 'black'),
+    axis.line = element_line(colour = "black"),
+    plot.title = element_text(hjust = 0.5),
+    axis.title=element_text(face = "bold",size = 10),
+    axis.text = element_text(face = "bold", size = 10),
+    legend.text = element_text(face = "bold"),
+    legend.title = element_text(face = "bold")
+  )+
+  scale_x_discrete(labels=extract_bin)+
+geom_vline(xintercept = c(paste0("nucleosome.bin_",bin_number),"linker.bin_1"), linetype = "dotdash")+
+  ylim(20,50)
+
+print(p)
+}
+
+
+# visual_method(paste0("/home/user/data/lit/project/6mA/feature/danpos/normed/",bin_number,"bin/C.elegans/"),
+#               "SMRT-list-SMRT-1",sym("GC(%)"))
+# visual_method(paste0("/home/user/data/lit/project/6mA/feature/danpos/normed/",bin_number,"bin/C.elegans/"),"SMRT-list-SMRT-1",sym("mA/(A+T)"))
+visual_method(paste0("/home/user/data/lit/project/6mA/feature/danpos/normed/",bin_number,"bin/C.elegans/"),"correct-strand-1",sym("mA/(A+T)"))
+visual_method(paste0("/home/user/data/lit/project/6mA/feature/danpos/normed/",bin_number,"bin/C.elegans/"),"correct-strand-2-shuf",sym("mA/(A+T)"))
+# visual_method(paste0("/home/user/data/lit/project/6mA/feature/danpos/normed/",bin_number,"bin/C.elegans/"),"correct-strand-3",sym("mA/(A+T)"))
+
+
+visual_method <- function(binned_level_dir,list,variable){
+# binned_level.input <-
+# read.table(paste0(binned_level_dir, "binned.level.txt")) %>% 
+# set_names("sample", "type", "list", "bin", "mA", "A","C","G","T","base_number","AT","GC","FreqSum") %>% dplyr::filter(list==!!list) %>% mutate(type.bin=paste0(type,".",bin)) %>% 
+#   mutate("mA/A"=mA/A,"mA/(A+T)"=mA/(A+T),"FreqSum/(A+T)"=FreqSum/(A+T),"FreqSum/A"=FreqSum/A,"base_sum"=A+T+G+C) %>% mutate("GC(%)"=(G+C)/base_sum,"AT(%)"=(A+T)/base_sum) 
+
+binned_level.input <-
+read.table(paste0(binned_level_dir, "binned.level.txt")) %>% 
+set_names("sample", "type", "list", "bin", "mA", "A","C","G","T","base_number","AT","GC","FreqSum") %>% dplyr::filter(list==!!list) %>% mutate(type.bin=paste0(type,".",bin)) %>% 
+  mutate("mA/A"=mA/A*10^6,"mA/(A+T)"=mA/(A+T)*10^6,"FreqSum/(A+T)"=FreqSum/(A+T)*10^6,"FreqSum/A"=FreqSum/A*10^6,"base_sum"=A+T+G+C) %>% mutate("GC(%)"=(G+C)/base_sum,"AT(%)"=(A+T)/base_sum) 
+
+# read.table(paste0(binned_level_dir, "binned.level.txt")) %>%
+# set_names("sample", "type", "list", "bin", "mA", "A","C","G","T","base_number","AT","GC","FreqSum") %>% group_by(type, list,bin) %>% summarise(mA = sum(mA),A = sum(A),T=sum(T),G=sum(G),C=sum(C),base_number=sum(base_number),FreqSum=sum(FreqSum)) %>% dplyr::filter(list==!!list) %>% mutate(type.bin=paste0(type,".",bin)) %>%
+#   mutate("mA/A"=mA/A,"mA/(A+T)"=mA/(A+T),"FreqSum/(A+T)"=FreqSum/(A+T),"FreqSum/A"=FreqSum/A,"base_sum"=A+T+G+C) %>% mutate("GC(%)"=(G+C)/base_sum,"AT(%)"=(A+T)/base_sum)-> binned_level.input.merge
+
+read.table(paste0(binned_level_dir, "binned.level.txt")) %>%
+set_names("sample", "type", "list", "bin", "mA", "A","C","G","T","base_number","AT","GC","FreqSum") %>% group_by(type, list,bin) %>% summarise(mA = sum(mA),A = sum(A),T=sum(T),G=sum(G),C=sum(C),base_number=sum(base_number),FreqSum=sum(FreqSum)) %>% dplyr::filter(list==!!list) %>% mutate(type.bin=paste0(type,".",bin)) %>%
+  mutate("mA/A"=mA/A*10^6,"mA/(A+T)"=mA/(A+T)*10^6,"FreqSum/(A+T)"=FreqSum/(A+T)*10^6,"FreqSum/A"=FreqSum/A*10^6,"base_sum"=A+T+G+C) %>% mutate("GC(%)"=(G+C)/base_sum,"AT(%)"=(A+T)/base_sum)-> binned_level.input.merge
+
+
+name_boom <- function(fixname, seq) {
+  name_all = NULL
+  for (i in seq) {
+    name = paste0(fixname, i)
+    name_all = c(name_all, name)
+  }
+  return(name_all)
+}
+
+extract_bin <- function(x){
+  str_split(x,"\\.",simplify = TRUE)[,2]
+  }
+
+# p <- binned_level.input %>%
+# ggplot(mapping = aes(
+#   x = factor(type.bin,levels = c(
+#     name_boom("nucleosome.bin_", seq(1, bin_number/2)),
+#     name_boom("linker.bin_", seq(1,bin_number/2))
+#   )),
+#   y = !!variable,
+#   color = sample,
+#   group = sample
+# )) +
+# geom_line(size=1) +
+# scale_color_manual(values=c("#ef858c","#5ea9d7"))+
+# # geom_point() +
+# theme(axis.text.x = element_text(hjust = 1, angle = 45),
+#       axis.title.x = element_blank()) +
+# ylab(paste0(variable))+
+#    theme(
+#     panel.grid = element_blank(),
+#     # panel.background = element_rect(fill = 'transparent', color = 'black'),
+#     panel.background = element_rect(fill = 'transparent', color = 'white'),
+#     # panel.border = element_rect(fill = 'transparent', color = 'black'),
+#     axis.line = element_line(colour = "black"),
+#     plot.title = element_text(hjust = 0.5),
+#     axis.title=element_text(face = "bold",size = 10),
+#     axis.text = element_text(face = "bold", size = 10),
+#     legend.text = element_text(face = "bold"),
+#     legend.title = element_text(face = "bold")
+#   )+
+#   scale_x_discrete(labels=extract_bin)+
+# geom_vline(xintercept = c(paste0("nucleosome.bin_",bin_number/2),"linker.bin_1"), linetype = "dotdash")
+# 
+# print(p)
+
+
+p <- binned_level.input.merge %>%
+ggplot(mapping = aes(
+  x = factor(type.bin,levels = c(
+    name_boom("nucleosome.bin_", seq(1, bin_number/2)),
+    name_boom("linker.bin_", seq(1,bin_number/2))
+  )),
+  y = !!variable,
+  group=1
+)) +
+geom_line(size=1,color="#ef858c") +
+# geom_point() +
+theme(axis.text.x = element_text(hjust = 1, angle = 45),
+      axis.title.x = element_blank()) +
+ylab(paste0(variable))+
+   theme(
+    panel.grid = element_blank(),
+    # panel.background = element_rect(fill = 'transparent', color = 'black'),
+    panel.background = element_rect(fill = 'transparent', color = 'white'),
+    # panel.border = element_rect(fill = 'transparent', color = 'black'),
+    axis.line = element_line(colour = "black"),
+    plot.title = element_text(hjust = 0.5),
+    axis.title=element_text(face = "bold",size = 10),
+    axis.text = element_text(face = "bold", size = 10),
+    legend.text = element_text(face = "bold"),
+    legend.title = element_text(face = "bold")
+  )+
+  scale_x_discrete(labels=extract_bin)+
+geom_vline(xintercept = c(paste0("nucleosome.bin_",bin_number/2),"linker.bin_1"), linetype = "dotdash")+
+  ylim(20,50)
+
+print(p)
+}
+
+
+
+# visual_method(paste0("/home/user/data/lit/project/6mA/feature/danpos/normed/",bin_number,"bin/C.elegans/merge/"),
+              # "SMRT-list-SMRT-1",sym("GC(%)"))
+# visual_method(paste0("/home/user/data/lit/project/6mA/feature/danpos/normed/",bin_number,"bin/C.elegans/merge/"),"SMRT-list-SMRT-1",sym("mA/(A+T)"))
+visual_method(paste0("/home/user/data/lit/project/6mA/feature/danpos/normed/",bin_number,"bin/C.elegans/merge/"),"correct-strand-1",sym("mA/(A+T)"))
+visual_method(paste0("/home/user/data/lit/project/6mA/feature/danpos/normed/",bin_number,"bin/C.elegans/merge/"),"correct-strand-2-shuf",sym("mA/(A+T)"))
+# visual_method(paste0("/home/user/data/lit/project/6mA/feature/danpos/normed/",bin_number,"bin/C.elegans/merge/"),"correct-strand-3",sym("mA/(A+T)"))
+
+```
+
+
+```{r show 10 bins each nucleosome and linker}
+
+bin_number=8
+
+visual_method <- function(binned_level_dir,list,variable){
+# binned_level.input <-
+# read.table(paste0(binned_level_dir, "binned.level.txt")) %>% 
+# set_names("sample", "type", "list", "bin", "mA", "A","C","G","T","base_number","AT","GC","FreqSum") %>% dplyr::filter(list==!!list) %>% mutate(type.bin=paste0(type,".",bin)) %>% 
+#   mutate("mA/A"=mA/A,"mA/(A+T)"=mA/(A+T),"FreqSum/(A+T)"=FreqSum/(A+T),"FreqSum/A"=FreqSum/A,"base_sum"=A+T+G+C) %>% mutate("GC(%)"=(G+C)/base_sum,"AT(%)"=(A+T)/base_sum) 
+
+binned_level.input <-
+read.table(paste0(binned_level_dir, "binned.level.txt")) %>% 
+set_names("sample", "type", "list", "bin", "mA", "A","C","G","T","base_number","AT","GC","FreqSum") %>% dplyr::filter(list==!!list) %>% mutate(type.bin=paste0(type,".",bin)) %>% 
+  mutate("mA/A"=mA/A*10^6,"mA/(A+T)"=mA/(A+T)*10^6,"FreqSum/(A+T)"=FreqSum/(A+T)*10^6,"FreqSum/A"=FreqSum/A*10^6,"base_sum"=A+T+G+C) %>% mutate("GC(%)"=(G+C)/base_sum,"AT(%)"=(A+T)/base_sum) 
+
+# read.table(paste0(binned_level_dir, "binned.level.txt")) %>%
+# set_names("sample", "type", "list", "bin", "mA", "A","C","G","T","base_number","AT","GC","FreqSum") %>% group_by(type, list,bin) %>% summarise(mA = sum(mA),A = sum(A),T=sum(T),G=sum(G),C=sum(C),base_number=sum(base_number),FreqSum=sum(FreqSum)) %>% dplyr::filter(list==!!list) %>% mutate(type.bin=paste0(type,".",bin)) %>%
+#   mutate("mA/A"=mA/A,"mA/(A+T)"=mA/(A+T),"FreqSum/(A+T)"=FreqSum/(A+T),"FreqSum/A"=FreqSum/A,"base_sum"=A+T+G+C) %>% mutate("GC(%)"=(G+C)/base_sum,"AT(%)"=(A+T)/base_sum)-> binned_level.input.merge
+
+read.table(paste0(binned_level_dir, "binned.level.txt")) %>%
+set_names("sample", "type", "list", "bin", "mA", "A","C","G","T","base_number","AT","GC","FreqSum") %>% group_by(type, list,bin) %>% summarise(mA = sum(mA),A = sum(A),T=sum(T),G=sum(G),C=sum(C),base_number=sum(base_number),FreqSum=sum(FreqSum)) %>% dplyr::filter(list==!!list) %>% mutate(type.bin=paste0(type,".",bin)) %>%
+  mutate("mA/A"=mA/A*10^6,"mA/(A+T)"=mA/(A+T)*10^6,"FreqSum/(A+T)"=FreqSum/(A+T)*10^6,"FreqSum/A"=FreqSum/A*10^6,"base_sum"=A+T+G+C) %>% mutate("GC(%)"=(G+C)/base_sum,"AT(%)"=(A+T)/base_sum)-> binned_level.input.merge
+
+
+name_boom <- function(fixname, seq) {
+  name_all = NULL
+  for (i in seq) {
+    name = paste0(fixname, i)
+    name_all = c(name_all, name)
+  }
+  return(name_all)
+}
+
+extract_bin <- function(x){
+  str_split(x,"\\.",simplify = TRUE)[,2]
+  }
+
+# p <- binned_level.input %>%
+# ggplot(mapping = aes(
+#   x = factor(type.bin,levels = c(
+#     name_boom("nucleosome.bin_", seq(1, bin_number)),
+#     name_boom("linker.bin_", seq(1,bin_number))
+#   )),
+#   y = !!variable,
+#   color = sample,
+#   group = sample
+# )) +
+# geom_line(size=1) +
+# scale_color_manual(values=c("#ef858c","#5ea9d7"))+
+# # geom_point() +
+# theme(axis.text.x = element_text(hjust = 1, angle = 45),
+#       axis.title.x = element_blank()) +
+# ylab(paste0(variable))+
+#    theme(
+#     panel.grid = element_blank(),
+#     # panel.background = element_rect(fill = 'transparent', color = 'black'),
+#     panel.background = element_rect(fill = 'transparent', color = 'white'),
+#     # panel.border = element_rect(fill = 'transparent', color = 'black'),
+#     axis.line = element_line(colour = "black"),
+#     plot.title = element_text(hjust = 0.5),
+#     axis.title=element_text(face = "bold",size = 10),
+#     axis.text = element_text(face = "bold", size = 10),
+#     legend.text = element_text(face = "bold"),
+#     legend.title = element_text(face = "bold")
+#   )+
+#   scale_x_discrete(labels=extract_bin)+
+# geom_vline(xintercept = c(paste0("nucleosome.bin_",bin_number),"linker.bin_1"), linetype = "dotdash")
+# 
+# print(p)
+
+p <- binned_level.input.merge %>%
+ggplot(mapping = aes(
+  x = factor(type.bin,levels = c(
+    name_boom("nucleosome.bin_", seq(1, bin_number)),
+    name_boom("linker.bin_", seq(1,bin_number))
+  )),
+  y = !!variable,
+  group=1
+)) +
+geom_line(size=1,color="#ef858c") +
+# geom_point() +
+theme(axis.text.x = element_text(hjust = 1, angle = 45),
+      axis.title.x = element_blank()) +
+ylab(paste0(variable))+
+   theme(
+    panel.grid = element_blank(),
+    # panel.background = element_rect(fill = 'transparent', color = 'black'),
+    panel.background = element_rect(fill = 'transparent', color = 'white'),
+    # panel.border = element_rect(fill = 'transparent', color = 'black'),
+    axis.line = element_line(colour = "black"),
+    plot.title = element_text(hjust = 0.5),
+    axis.title=element_text(face = "bold",size = 10),
+    axis.text = element_text(face = "bold", size = 10),
+    legend.text = element_text(face = "bold"),
+    legend.title = element_text(face = "bold")
+  )+
+  scale_x_discrete(labels=extract_bin)+
+geom_vline(xintercept = c(paste0("nucleosome.bin_",bin_number),"linker.bin_1"), linetype = "dotdash")+
+  ylim(20,50)
+
+print(p)
+}
+
+
+# visual_method(paste0("/home/user/data/lit/project/6mA/feature/danpos/normed/",bin_number,"bin/C.elegans/"),
+#               "SMRT-list-SMRT-1",sym("GC(%)"))
+# visual_method(paste0("/home/user/data/lit/project/6mA/feature/danpos/normed/",bin_number,"bin/C.elegans/"),"SMRT-list-SMRT-1",sym("mA/(A+T)"))
+visual_method(paste0("/home/user/data/lit/project/6mA/feature/danpos/normed/",bin_number,"bin/C.elegans/"),"correct-strand-1",sym("mA/(A+T)"))
+visual_method(paste0("/home/user/data/lit/project/6mA/feature/danpos/normed/",bin_number,"bin/C.elegans/"),"correct-strand-2-shuf",sym("mA/(A+T)"))
+# visual_method(paste0("/home/user/data/lit/project/6mA/feature/danpos/normed/",bin_number,"bin/C.elegans/"),"correct-strand-3",sym("mA/(A+T)"))
+
+
+visual_method <- function(binned_level_dir,list,variable){
+# binned_level.input <-
+# read.table(paste0(binned_level_dir, "binned.level.txt")) %>% 
+# set_names("sample", "type", "list", "bin", "mA", "A","C","G","T","base_number","AT","GC","FreqSum") %>% dplyr::filter(list==!!list) %>% mutate(type.bin=paste0(type,".",bin)) %>% 
+#   mutate("mA/A"=mA/A,"mA/(A+T)"=mA/(A+T),"FreqSum/(A+T)"=FreqSum/(A+T),"FreqSum/A"=FreqSum/A,"base_sum"=A+T+G+C) %>% mutate("GC(%)"=(G+C)/base_sum,"AT(%)"=(A+T)/base_sum) 
+
+binned_level.input <-
+read.table(paste0(binned_level_dir, "binned.level.txt")) %>% 
+set_names("sample", "type", "list", "bin", "mA", "A","C","G","T","base_number","AT","GC","FreqSum") %>% dplyr::filter(list==!!list) %>% mutate(type.bin=paste0(type,".",bin)) %>% 
+  mutate("mA/A"=mA/A*10^6,"mA/(A+T)"=mA/(A+T)*10^6,"FreqSum/(A+T)"=FreqSum/(A+T)*10^6,"FreqSum/A"=FreqSum/A*10^6,"base_sum"=A+T+G+C) %>% mutate("GC(%)"=(G+C)/base_sum,"AT(%)"=(A+T)/base_sum) 
+
+# read.table(paste0(binned_level_dir, "binned.level.txt")) %>%
+# set_names("sample", "type", "list", "bin", "mA", "A","C","G","T","base_number","AT","GC","FreqSum") %>% group_by(type, list,bin) %>% summarise(mA = sum(mA),A = sum(A),T=sum(T),G=sum(G),C=sum(C),base_number=sum(base_number),FreqSum=sum(FreqSum)) %>% dplyr::filter(list==!!list) %>% mutate(type.bin=paste0(type,".",bin)) %>%
+#   mutate("mA/A"=mA/A,"mA/(A+T)"=mA/(A+T),"FreqSum/(A+T)"=FreqSum/(A+T),"FreqSum/A"=FreqSum/A,"base_sum"=A+T+G+C) %>% mutate("GC(%)"=(G+C)/base_sum,"AT(%)"=(A+T)/base_sum)-> binned_level.input.merge
+
+read.table(paste0(binned_level_dir, "binned.level.txt")) %>%
+set_names("sample", "type", "list", "bin", "mA", "A","C","G","T","base_number","AT","GC","FreqSum") %>% group_by(type, list,bin) %>% summarise(mA = sum(mA),A = sum(A),T=sum(T),G=sum(G),C=sum(C),base_number=sum(base_number),FreqSum=sum(FreqSum)) %>% dplyr::filter(list==!!list) %>% mutate(type.bin=paste0(type,".",bin)) %>%
+  mutate("mA/A"=mA/A*10^6,"mA/(A+T)"=mA/(A+T)*10^6,"FreqSum/(A+T)"=FreqSum/(A+T)*10^6,"FreqSum/A"=FreqSum/A*10^6,"base_sum"=A+T+G+C) %>% mutate("GC(%)"=(G+C)/base_sum,"AT(%)"=(A+T)/base_sum)-> binned_level.input.merge
+
+
+name_boom <- function(fixname, seq) {
+  name_all = NULL
+  for (i in seq) {
+    name = paste0(fixname, i)
+    name_all = c(name_all, name)
+  }
+  return(name_all)
+}
+
+extract_bin <- function(x){
+  str_split(x,"\\.",simplify = TRUE)[,2]
+  }
+
+# p <- binned_level.input %>%
+# ggplot(mapping = aes(
+#   x = factor(type.bin,levels = c(
+#     name_boom("nucleosome.bin_", seq(1, bin_number/2)),
+#     name_boom("linker.bin_", seq(1,bin_number/2))
+#   )),
+#   y = !!variable,
+#   color = sample,
+#   group = sample
+# )) +
+# geom_line(size=1) +
+# scale_color_manual(values=c("#ef858c","#5ea9d7"))+
+# # geom_point() +
+# theme(axis.text.x = element_text(hjust = 1, angle = 45),
+#       axis.title.x = element_blank()) +
+# ylab(paste0(variable))+
+#    theme(
+#     panel.grid = element_blank(),
+#     # panel.background = element_rect(fill = 'transparent', color = 'black'),
+#     panel.background = element_rect(fill = 'transparent', color = 'white'),
+#     # panel.border = element_rect(fill = 'transparent', color = 'black'),
+#     axis.line = element_line(colour = "black"),
+#     plot.title = element_text(hjust = 0.5),
+#     axis.title=element_text(face = "bold",size = 10),
+#     axis.text = element_text(face = "bold", size = 10),
+#     legend.text = element_text(face = "bold"),
+#     legend.title = element_text(face = "bold")
+#   )+
+#   scale_x_discrete(labels=extract_bin)+
+# geom_vline(xintercept = c(paste0("nucleosome.bin_",bin_number/2),"linker.bin_1"), linetype = "dotdash")
+# 
+# print(p)
+
+
+p <- binned_level.input.merge %>%
+ggplot(mapping = aes(
+  x = factor(type.bin,levels = c(
+    name_boom("nucleosome.bin_", seq(1, bin_number/2)),
+    name_boom("linker.bin_", seq(1,bin_number/2))
+  )),
+  y = !!variable,
+  group=1
+)) +
+geom_line(size=1,color="#ef858c") +
+# geom_point() +
+theme(axis.text.x = element_text(hjust = 1, angle = 45),
+      axis.title.x = element_blank()) +
+ylab(paste0(variable))+
+   theme(
+    panel.grid = element_blank(),
+    # panel.background = element_rect(fill = 'transparent', color = 'black'),
+    panel.background = element_rect(fill = 'transparent', color = 'white'),
+    # panel.border = element_rect(fill = 'transparent', color = 'black'),
+    axis.line = element_line(colour = "black"),
+    plot.title = element_text(hjust = 0.5),
+    axis.title=element_text(face = "bold",size = 10),
+    axis.text = element_text(face = "bold", size = 10),
+    legend.text = element_text(face = "bold"),
+    legend.title = element_text(face = "bold")
+  )+
+  scale_x_discrete(labels=extract_bin)+
+geom_vline(xintercept = c(paste0("nucleosome.bin_",bin_number/2),"linker.bin_1"), linetype = "dotdash")+
+  ylim(20,50)
+
+print(p)
+}
+
+
+
+# visual_method(paste0("/home/user/data/lit/project/6mA/feature/danpos/normed/",bin_number,"bin/C.elegans/merge/"),
+              # "SMRT-list-SMRT-1",sym("GC(%)"))
+# visual_method(paste0("/home/user/data/lit/project/6mA/feature/danpos/normed/",bin_number,"bin/C.elegans/merge/"),"SMRT-list-SMRT-1",sym("mA/(A+T)"))
+visual_method(paste0("/home/user/data/lit/project/6mA/feature/danpos/normed/",bin_number,"bin/C.elegans/merge/"),"correct-strand-1",sym("mA/(A+T)"))
+visual_method(paste0("/home/user/data/lit/project/6mA/feature/danpos/normed/",bin_number,"bin/C.elegans/merge/"),"correct-strand-2-shuf",sym("mA/(A+T)"))
+# visual_method(paste0("/home/user/data/lit/project/6mA/feature/danpos/normed/",bin_number,"bin/C.elegans/merge/"),"correct-strand-3",sym("mA/(A+T)"))
+
+```
+
+
+```{r bin_number=8 different list in one image}
+
+bin_number=8
+
+visual_method <- function(binned_level_dir,list,variable){
+
+read.table(paste0(binned_level_dir, "binned.level.txt")) %>%
+set_names("sample", "type", "list", "bin", "mA", "A","C","G","T","base_number","AT","GC","FreqSum") %>% filter(list=="correct-strand-1" | list == "correct-strand-2-shuf") %>% group_by(type, list,bin) %>% summarise(mA = sum(mA),A = sum(A),T=sum(T),G=sum(G),C=sum(C),base_number=sum(base_number),FreqSum=sum(FreqSum)) %>% mutate(type.bin=paste0(type,".",bin)) %>%
+  mutate("mA/A"=mA/A*10^6,"6mA level"=mA/(A+T)*10^6,"FreqSum/(A+T)"=FreqSum/(A+T)*10^6,"FreqSum/A"=FreqSum/A*10^6,"base_sum"=A+T+G+C) %>% mutate("GC(%)"=(G+C)/base_sum,"AT(%)"=(A+T)/base_sum)-> binned_level.input.merge
+
+
+name_boom <- function(fixname, seq) {
+  name_all = NULL
+  for (i in seq) {
+    name = paste0(fixname, i)
+    name_all = c(name_all, name)
+  }
+  return(name_all)
+}
+
+extract_bin <- function(x){
+  str_split(x,"_",simplify = TRUE)[,2]
+  }
+
+p <- binned_level.input.merge %>%
+ggplot(mapping = aes(
+  x = factor(type.bin,levels = c(
+    name_boom("nucleosome.bin_", seq(1, bin_number)),
+    name_boom("linker.bin_", seq(1,bin_number))
+  )),
+  y = !!variable,
+  group=list,
+  color=list
+)) +
+geom_line(size=1) +
+scale_color_manual(values=c("#ef858c","#5ea9d7"))+
+# geom_point() +
+theme(axis.text.x = element_text(hjust = 1, angle = 0),
+      axis.title.x = element_blank()) +
+ylab(paste0(variable))+
+   theme(
+    panel.grid = element_blank(),
+    # panel.background = element_rect(fill = 'transparent', color = 'black'),
+    panel.background = element_rect(fill = 'transparent', color = 'white'),
+    # panel.border = element_rect(fill = 'transparent', color = 'black'),
+    axis.line = element_line(colour = "black"),
+    plot.title = element_text(hjust = 0.5),
+    axis.title=element_text(face = "bold",size = 10),
+    axis.text = element_text(face = "bold", size = 10),
+    legend.text = element_text(face = "bold"),
+    legend.title = element_text(face = "bold"),
+    legend.key = element_blank()
+  )+
+  scale_x_discrete(labels=extract_bin)+
+geom_vline(xintercept = c(paste0("nucleosome.bin_",bin_number),"linker.bin_1"), linetype = "dotdash")+
+    scale_colour_discrete(
+    name="6mA list",
+    breaks = c("correct-strand-1","correct-strand-2-shuf"),
+    labels = c("Category 1","Category 2"))
+print(p)
+}
+
+
+visual_method(paste0("/home/user/data/lit/project/6mA/feature/danpos/normed/",bin_number,"bin/C.elegans/"),"all",sym("6mA level"))
+
+
+
+
+visual_method <- function(binned_level_dir,list,variable){
+
+
+read.table(paste0(binned_level_dir, "binned.level.txt")) %>%
+set_names("sample", "type", "list", "bin", "mA", "A","C","G","T","base_number","AT","GC","FreqSum") %>% filter(list=="correct-strand-1" | list == "correct-strand-2-shuf") %>% group_by(type, list,bin) %>% summarise(mA = sum(mA),A = sum(A),T=sum(T),G=sum(G),C=sum(C),base_number=sum(base_number),FreqSum=sum(FreqSum)) %>% mutate(type.bin=paste0(type,".",bin)) %>%
+  mutate("mA/A"=mA/A*10^6,"6mA level"=mA/(A+T)*10^6,"FreqSum/(A+T)"=FreqSum/(A+T)*10^6,"FreqSum/A"=FreqSum/A*10^6,"base_sum"=A+T+G+C) %>% mutate("GC(%)"=(G+C)/base_sum,"AT(%)"=(A+T)/base_sum)-> binned_level.input.merge
+
+
+name_boom <- function(fixname, seq) {
+  name_all = NULL
+  for (i in seq) {
+    name = paste0(fixname, i)
+    name_all = c(name_all, name)
+  }
+  return(name_all)
+}
+
+extract_bin <- function(x){
+  str_split(x,"\\_",simplify = TRUE)[,2]
+  }
+
+
+
+
+p <- binned_level.input.merge %>%
+ggplot(mapping = aes(
+  x = factor(type.bin,levels = c(
+    name_boom("nucleosome.bin_", seq(1, bin_number/2)),
+    name_boom("linker.bin_", seq(1,bin_number/2))
+  )),
+  y = !!variable,
+  group=list,
+  color=list
+)) +
+geom_line(size=1) +
+# geom_point() +
+scale_color_manual(values=c("#ef858c","#5ea9d7"))+
+theme(axis.text.x = element_text(hjust = 1, angle = 0),
+      axis.title.x = element_blank()) +
+ylab(paste0(variable))+
+   theme(
+    panel.grid = element_blank(),
+    # panel.background = element_rect(fill = 'transparent', color = 'black'),
+    panel.background = element_rect(fill = 'transparent', color = 'white'),
+    # panel.border = element_rect(fill = 'transparent', color = 'black'),
+    axis.line = element_line(colour = "black"),
+    plot.title = element_text(hjust = 0.5),
+    axis.title=element_text(face = "bold",size = 10),
+    axis.text = element_text(face = "bold", size = 10),
+    legend.text = element_text(face = "bold"),
+    legend.title = element_text(face = "bold"),
+    legend.key = element_blank()
+  )+
+  scale_x_discrete(labels=extract_bin)+
+geom_vline(xintercept = c(paste0("nucleosome.bin_",bin_number/2),"linker.bin_1"), linetype = "dotdash")
+  # scale_colour_discrete(
+  #   name="6mA list",
+  #   breaks = c("correct-strand-1","correct-strand-2-shuf"),
+  #   labels = c("Category 1","Category 2"))+
+  # coord_cartesian(clip = 'off',ylim = c(20,50))+ 
+  # annotate('text',x="nucleosome.bin_2",y=14,label='nucleosome',size=8)+
+  # annotate('segment',x="nucleosome.bin_1",xend="nucleosome.bin_4",y=15,yend=15,
+  #          arrow = arrow(ends = "both", type="closed",length = unit(0.2,"cm")))+
+  # annotate('segment',x="linker.bin_1",xend="linker.bin_4",y=15,yend=15,
+  #          arrow = arrow(ends = "both", type="closed",length = unit(0.2,"cm")))+
+  # annotate('text',x="linker.bin_2",y=12,label='linker',size=8)
+
+print(p)
+}
+
+
+
+visual_method(paste0("/home/user/data/lit/project/6mA/feature/danpos/normed/",bin_number,"bin/C.elegans/merge/"),"all",sym("6mA level"))
+
+```
+
+
+```{r show 10 bins each nucleosome and linker}
+
+bin_number=6
+
+visual_method <- function(binned_level_dir,list,variable){
+# binned_level.input <-
+# read.table(paste0(binned_level_dir, "binned.level.txt")) %>% 
+# set_names("sample", "type", "list", "bin", "mA", "A","C","G","T","base_number","AT","GC","FreqSum") %>% dplyr::filter(list==!!list) %>% mutate(type.bin=paste0(type,".",bin)) %>% 
+#   mutate("mA/A"=mA/A,"mA/(A+T)"=mA/(A+T),"FreqSum/(A+T)"=FreqSum/(A+T),"FreqSum/A"=FreqSum/A,"base_sum"=A+T+G+C) %>% mutate("GC(%)"=(G+C)/base_sum,"AT(%)"=(A+T)/base_sum) 
+
+binned_level.input <-
+read.table(paste0(binned_level_dir, "binned.level.txt")) %>% 
+set_names("sample", "type", "list", "bin", "mA", "A","C","G","T","base_number","AT","GC","FreqSum") %>% dplyr::filter(list==!!list) %>% mutate(type.bin=paste0(type,".",bin)) %>% 
+  mutate("mA/A"=mA/A*10^6,"mA/(A+T)"=mA/(A+T)*10^6,"FreqSum/(A+T)"=FreqSum/(A+T)*10^6,"FreqSum/A"=FreqSum/A*10^6,"base_sum"=A+T+G+C) %>% mutate("GC(%)"=(G+C)/base_sum,"AT(%)"=(A+T)/base_sum) 
+
+# read.table(paste0(binned_level_dir, "binned.level.txt")) %>%
+# set_names("sample", "type", "list", "bin", "mA", "A","C","G","T","base_number","AT","GC","FreqSum") %>% group_by(type, list,bin) %>% summarise(mA = sum(mA),A = sum(A),T=sum(T),G=sum(G),C=sum(C),base_number=sum(base_number),FreqSum=sum(FreqSum)) %>% dplyr::filter(list==!!list) %>% mutate(type.bin=paste0(type,".",bin)) %>%
+#   mutate("mA/A"=mA/A,"mA/(A+T)"=mA/(A+T),"FreqSum/(A+T)"=FreqSum/(A+T),"FreqSum/A"=FreqSum/A,"base_sum"=A+T+G+C) %>% mutate("GC(%)"=(G+C)/base_sum,"AT(%)"=(A+T)/base_sum)-> binned_level.input.merge
+
+read.table(paste0(binned_level_dir, "binned.level.txt")) %>%
+set_names("sample", "type", "list", "bin", "mA", "A","C","G","T","base_number","AT","GC","FreqSum") %>% group_by(type, list,bin) %>% summarise(mA = sum(mA),A = sum(A),T=sum(T),G=sum(G),C=sum(C),base_number=sum(base_number),FreqSum=sum(FreqSum)) %>% dplyr::filter(list==!!list) %>% mutate(type.bin=paste0(type,".",bin)) %>%
+  mutate("mA/A"=mA/A*10^6,"mA/(A+T)"=mA/(A+T)*10^6,"FreqSum/(A+T)"=FreqSum/(A+T)*10^6,"FreqSum/A"=FreqSum/A*10^6,"base_sum"=A+T+G+C) %>% mutate("GC(%)"=(G+C)/base_sum,"AT(%)"=(A+T)/base_sum)-> binned_level.input.merge
+
+
+name_boom <- function(fixname, seq) {
+  name_all = NULL
+  for (i in seq) {
+    name = paste0(fixname, i)
+    name_all = c(name_all, name)
+  }
+  return(name_all)
+}
+
+extract_bin <- function(x){
+  str_split(x,"\\.",simplify = TRUE)[,2]
+  }
+
+# p <- binned_level.input %>%
+# ggplot(mapping = aes(
+#   x = factor(type.bin,levels = c(
+#     name_boom("nucleosome.bin_", seq(1, bin_number)),
+#     name_boom("linker.bin_", seq(1,bin_number))
+#   )),
+#   y = !!variable,
+#   color = sample,
+#   group = sample
+# )) +
+# geom_line(size=1) +
+# scale_color_manual(values=c("#ef858c","#5ea9d7"))+
+# # geom_point() +
+# theme(axis.text.x = element_text(hjust = 1, angle = 45),
+#       axis.title.x = element_blank()) +
+# ylab(paste0(variable))+
+#    theme(
+#     panel.grid = element_blank(),
+#     # panel.background = element_rect(fill = 'transparent', color = 'black'),
+#     panel.background = element_rect(fill = 'transparent', color = 'white'),
+#     # panel.border = element_rect(fill = 'transparent', color = 'black'),
+#     axis.line = element_line(colour = "black"),
+#     plot.title = element_text(hjust = 0.5),
+#     axis.title=element_text(face = "bold",size = 10),
+#     axis.text = element_text(face = "bold", size = 10),
+#     legend.text = element_text(face = "bold"),
+#     legend.title = element_text(face = "bold")
+#   )+
+#   scale_x_discrete(labels=extract_bin)+
+# geom_vline(xintercept = c(paste0("nucleosome.bin_",bin_number),"linker.bin_1"), linetype = "dotdash")
+# 
+# print(p)
+
+p <- binned_level.input.merge %>%
+ggplot(mapping = aes(
+  x = factor(type.bin,levels = c(
+    name_boom("nucleosome.bin_", seq(1, bin_number)),
+    name_boom("linker.bin_", seq(1,bin_number))
+  )),
+  y = !!variable,
+  group=1
+)) +
+geom_line(size=1,color="#ef858c") +
+# geom_point() +
+theme(axis.text.x = element_text(hjust = 1, angle = 45),
+      axis.title.x = element_blank()) +
+ylab(paste0(variable))+
+   theme(
+    panel.grid = element_blank(),
+    # panel.background = element_rect(fill = 'transparent', color = 'black'),
+    panel.background = element_rect(fill = 'transparent', color = 'white'),
+    # panel.border = element_rect(fill = 'transparent', color = 'black'),
+    axis.line = element_line(colour = "black"),
+    plot.title = element_text(hjust = 0.5),
+    axis.title=element_text(face = "bold",size = 10),
+    axis.text = element_text(face = "bold", size = 10),
+    legend.text = element_text(face = "bold"),
+    legend.title = element_text(face = "bold")
+  )+
+  scale_x_discrete(labels=extract_bin)+
+geom_vline(xintercept = c(paste0("nucleosome.bin_",bin_number),"linker.bin_1"), linetype = "dotdash")+
+  ylim(20,50)
+
+print(p)
+}
+
+
+# visual_method(paste0("/home/user/data/lit/project/6mA/feature/danpos/normed/",bin_number,"bin/C.elegans/"),
+#               "SMRT-list-SMRT-1",sym("GC(%)"))
+# visual_method(paste0("/home/user/data/lit/project/6mA/feature/danpos/normed/",bin_number,"bin/C.elegans/"),"SMRT-list-SMRT-1",sym("mA/(A+T)"))
+visual_method(paste0("/home/user/data/lit/project/6mA/feature/danpos/normed/",bin_number,"bin/C.elegans/"),"correct-strand-1",sym("mA/(A+T)"))
+visual_method(paste0("/home/user/data/lit/project/6mA/feature/danpos/normed/",bin_number,"bin/C.elegans/"),"correct-strand-2-shuf",sym("mA/(A+T)"))
+# visual_method(paste0("/home/user/data/lit/project/6mA/feature/danpos/normed/",bin_number,"bin/C.elegans/"),"correct-strand-3",sym("mA/(A+T)"))
+
+
+visual_method <- function(binned_level_dir,list,variable){
+# binned_level.input <-
+# read.table(paste0(binned_level_dir, "binned.level.txt")) %>% 
+# set_names("sample", "type", "list", "bin", "mA", "A","C","G","T","base_number","AT","GC","FreqSum") %>% dplyr::filter(list==!!list) %>% mutate(type.bin=paste0(type,".",bin)) %>% 
+#   mutate("mA/A"=mA/A,"mA/(A+T)"=mA/(A+T),"FreqSum/(A+T)"=FreqSum/(A+T),"FreqSum/A"=FreqSum/A,"base_sum"=A+T+G+C) %>% mutate("GC(%)"=(G+C)/base_sum,"AT(%)"=(A+T)/base_sum) 
+
+binned_level.input <-
+read.table(paste0(binned_level_dir, "binned.level.txt")) %>% 
+set_names("sample", "type", "list", "bin", "mA", "A","C","G","T","base_number","AT","GC","FreqSum") %>% dplyr::filter(list==!!list) %>% mutate(type.bin=paste0(type,".",bin)) %>% 
+  mutate("mA/A"=mA/A*10^6,"mA/(A+T)"=mA/(A+T)*10^6,"FreqSum/(A+T)"=FreqSum/(A+T)*10^6,"FreqSum/A"=FreqSum/A*10^6,"base_sum"=A+T+G+C) %>% mutate("GC(%)"=(G+C)/base_sum,"AT(%)"=(A+T)/base_sum) 
+
+# read.table(paste0(binned_level_dir, "binned.level.txt")) %>%
+# set_names("sample", "type", "list", "bin", "mA", "A","C","G","T","base_number","AT","GC","FreqSum") %>% group_by(type, list,bin) %>% summarise(mA = sum(mA),A = sum(A),T=sum(T),G=sum(G),C=sum(C),base_number=sum(base_number),FreqSum=sum(FreqSum)) %>% dplyr::filter(list==!!list) %>% mutate(type.bin=paste0(type,".",bin)) %>%
+#   mutate("mA/A"=mA/A,"mA/(A+T)"=mA/(A+T),"FreqSum/(A+T)"=FreqSum/(A+T),"FreqSum/A"=FreqSum/A,"base_sum"=A+T+G+C) %>% mutate("GC(%)"=(G+C)/base_sum,"AT(%)"=(A+T)/base_sum)-> binned_level.input.merge
+
+read.table(paste0(binned_level_dir, "binned.level.txt")) %>%
+set_names("sample", "type", "list", "bin", "mA", "A","C","G","T","base_number","AT","GC","FreqSum") %>% group_by(type, list,bin) %>% summarise(mA = sum(mA),A = sum(A),T=sum(T),G=sum(G),C=sum(C),base_number=sum(base_number),FreqSum=sum(FreqSum)) %>% dplyr::filter(list==!!list) %>% mutate(type.bin=paste0(type,".",bin)) %>%
+  mutate("mA/A"=mA/A*10^6,"mA/(A+T)"=mA/(A+T)*10^6,"FreqSum/(A+T)"=FreqSum/(A+T)*10^6,"FreqSum/A"=FreqSum/A*10^6,"base_sum"=A+T+G+C) %>% mutate("GC(%)"=(G+C)/base_sum,"AT(%)"=(A+T)/base_sum)-> binned_level.input.merge
+
+
+name_boom <- function(fixname, seq) {
+  name_all = NULL
+  for (i in seq) {
+    name = paste0(fixname, i)
+    name_all = c(name_all, name)
+  }
+  return(name_all)
+}
+
+extract_bin <- function(x){
+  str_split(x,"\\.",simplify = TRUE)[,2]
+  }
+
+# p <- binned_level.input %>%
+# ggplot(mapping = aes(
+#   x = factor(type.bin,levels = c(
+#     name_boom("nucleosome.bin_", seq(1, bin_number/2)),
+#     name_boom("linker.bin_", seq(1,bin_number/2))
+#   )),
+#   y = !!variable,
+#   color = sample,
+#   group = sample
+# )) +
+# geom_line(size=1) +
+# scale_color_manual(values=c("#ef858c","#5ea9d7"))+
+# # geom_point() +
+# theme(axis.text.x = element_text(hjust = 1, angle = 45),
+#       axis.title.x = element_blank()) +
+# ylab(paste0(variable))+
+#    theme(
+#     panel.grid = element_blank(),
+#     # panel.background = element_rect(fill = 'transparent', color = 'black'),
+#     panel.background = element_rect(fill = 'transparent', color = 'white'),
+#     # panel.border = element_rect(fill = 'transparent', color = 'black'),
+#     axis.line = element_line(colour = "black"),
+#     plot.title = element_text(hjust = 0.5),
+#     axis.title=element_text(face = "bold",size = 10),
+#     axis.text = element_text(face = "bold", size = 10),
+#     legend.text = element_text(face = "bold"),
+#     legend.title = element_text(face = "bold")
+#   )+
+#   scale_x_discrete(labels=extract_bin)+
+# geom_vline(xintercept = c(paste0("nucleosome.bin_",bin_number/2),"linker.bin_1"), linetype = "dotdash")
+# 
+# print(p)
+
+
+p <- binned_level.input.merge %>%
+ggplot(mapping = aes(
+  x = factor(type.bin,levels = c(
+    name_boom("nucleosome.bin_", seq(1, bin_number/2)),
+    name_boom("linker.bin_", seq(1,bin_number/2))
+  )),
+  y = !!variable,
+  group=1
+)) +
+geom_line(size=1,color="#ef858c") +
+# geom_point() +
+theme(axis.text.x = element_text(hjust = 1, angle = 45),
+      axis.title.x = element_blank()) +
+ylab(paste0(variable))+
+   theme(
+    panel.grid = element_blank(),
+    # panel.background = element_rect(fill = 'transparent', color = 'black'),
+    panel.background = element_rect(fill = 'transparent', color = 'white'),
+    # panel.border = element_rect(fill = 'transparent', color = 'black'),
+    axis.line = element_line(colour = "black"),
+    plot.title = element_text(hjust = 0.5),
+    axis.title=element_text(face = "bold",size = 10),
+    axis.text = element_text(face = "bold", size = 10),
+    legend.text = element_text(face = "bold"),
+    legend.title = element_text(face = "bold")
+  )+
+  scale_x_discrete(labels=extract_bin)+
+geom_vline(xintercept = c(paste0("nucleosome.bin_",bin_number/2),"linker.bin_1"), linetype = "dotdash")+
+  ylim(20,50)
+
+print(p)
+}
+
+
+
+# visual_method(paste0("/home/user/data/lit/project/6mA/feature/danpos/normed/",bin_number,"bin/C.elegans/merge/"),
+              # "SMRT-list-SMRT-1",sym("GC(%)"))
+# visual_method(paste0("/home/user/data/lit/project/6mA/feature/danpos/normed/",bin_number,"bin/C.elegans/merge/"),"SMRT-list-SMRT-1",sym("mA/(A+T)"))
+visual_method(paste0("/home/user/data/lit/project/6mA/feature/danpos/normed/",bin_number,"bin/C.elegans/merge/"),"correct-strand-1",sym("mA/(A+T)"))
+visual_method(paste0("/home/user/data/lit/project/6mA/feature/danpos/normed/",bin_number,"bin/C.elegans/merge/"),"correct-strand-2-shuf",sym("mA/(A+T)"))
+# visual_method(paste0("/home/user/data/lit/project/6mA/feature/danpos/normed/",bin_number,"bin/C.elegans/merge/"),"correct-strand-3",sym("mA/(A+T)"))
+
+```
+
+```{r show 10 bins each nucleosome and linker}
+
+bin_number=4
+
+visual_method <- function(binned_level_dir,list,variable){
+# binned_level.input <-
+# read.table(paste0(binned_level_dir, "binned.level.txt")) %>% 
+# set_names("sample", "type", "list", "bin", "mA", "A","C","G","T","base_number","AT","GC","FreqSum") %>% dplyr::filter(list==!!list) %>% mutate(type.bin=paste0(type,".",bin)) %>% 
+#   mutate("mA/A"=mA/A,"mA/(A+T)"=mA/(A+T),"FreqSum/(A+T)"=FreqSum/(A+T),"FreqSum/A"=FreqSum/A,"base_sum"=A+T+G+C) %>% mutate("GC(%)"=(G+C)/base_sum,"AT(%)"=(A+T)/base_sum) 
+
+binned_level.input <-
+read.table(paste0(binned_level_dir, "binned.level.txt")) %>% 
+set_names("sample", "type", "list", "bin", "mA", "A","C","G","T","base_number","AT","GC","FreqSum") %>% dplyr::filter(list==!!list) %>% mutate(type.bin=paste0(type,".",bin)) %>% 
+  mutate("mA/A"=mA/A*10^6,"mA/(A+T)"=mA/(A+T)*10^6,"FreqSum/(A+T)"=FreqSum/(A+T)*10^6,"FreqSum/A"=FreqSum/A*10^6,"base_sum"=A+T+G+C) %>% mutate("GC(%)"=(G+C)/base_sum,"AT(%)"=(A+T)/base_sum) 
+
+# read.table(paste0(binned_level_dir, "binned.level.txt")) %>%
+# set_names("sample", "type", "list", "bin", "mA", "A","C","G","T","base_number","AT","GC","FreqSum") %>% group_by(type, list,bin) %>% summarise(mA = sum(mA),A = sum(A),T=sum(T),G=sum(G),C=sum(C),base_number=sum(base_number),FreqSum=sum(FreqSum)) %>% dplyr::filter(list==!!list) %>% mutate(type.bin=paste0(type,".",bin)) %>%
+#   mutate("mA/A"=mA/A,"mA/(A+T)"=mA/(A+T),"FreqSum/(A+T)"=FreqSum/(A+T),"FreqSum/A"=FreqSum/A,"base_sum"=A+T+G+C) %>% mutate("GC(%)"=(G+C)/base_sum,"AT(%)"=(A+T)/base_sum)-> binned_level.input.merge
+
+read.table(paste0(binned_level_dir, "binned.level.txt")) %>%
+set_names("sample", "type", "list", "bin", "mA", "A","C","G","T","base_number","AT","GC","FreqSum") %>% group_by(type, list,bin) %>% summarise(mA = sum(mA),A = sum(A),T=sum(T),G=sum(G),C=sum(C),base_number=sum(base_number),FreqSum=sum(FreqSum)) %>% dplyr::filter(list==!!list) %>% mutate(type.bin=paste0(type,".",bin)) %>%
+  mutate("mA/A"=mA/A*10^6,"mA/(A+T)"=mA/(A+T)*10^6,"FreqSum/(A+T)"=FreqSum/(A+T)*10^6,"FreqSum/A"=FreqSum/A*10^6,"base_sum"=A+T+G+C) %>% mutate("GC(%)"=(G+C)/base_sum,"AT(%)"=(A+T)/base_sum)-> binned_level.input.merge
+
+
+name_boom <- function(fixname, seq) {
+  name_all = NULL
+  for (i in seq) {
+    name = paste0(fixname, i)
+    name_all = c(name_all, name)
+  }
+  return(name_all)
+}
+
+extract_bin <- function(x){
+  str_split(x,"\\.",simplify = TRUE)[,2]
+  }
+
+# p <- binned_level.input %>%
+# ggplot(mapping = aes(
+#   x = factor(type.bin,levels = c(
+#     name_boom("nucleosome.bin_", seq(1, bin_number)),
+#     name_boom("linker.bin_", seq(1,bin_number))
+#   )),
+#   y = !!variable,
+#   color = sample,
+#   group = sample
+# )) +
+# geom_line(size=1) +
+# scale_color_manual(values=c("#ef858c","#5ea9d7"))+
+# # geom_point() +
+# theme(axis.text.x = element_text(hjust = 1, angle = 45),
+#       axis.title.x = element_blank()) +
+# ylab(paste0(variable))+
+#    theme(
+#     panel.grid = element_blank(),
+#     # panel.background = element_rect(fill = 'transparent', color = 'black'),
+#     panel.background = element_rect(fill = 'transparent', color = 'white'),
+#     # panel.border = element_rect(fill = 'transparent', color = 'black'),
+#     axis.line = element_line(colour = "black"),
+#     plot.title = element_text(hjust = 0.5),
+#     axis.title=element_text(face = "bold",size = 10),
+#     axis.text = element_text(face = "bold", size = 10),
+#     legend.text = element_text(face = "bold"),
+#     legend.title = element_text(face = "bold")
+#   )+
+#   scale_x_discrete(labels=extract_bin)+
+# geom_vline(xintercept = c(paste0("nucleosome.bin_",bin_number),"linker.bin_1"), linetype = "dotdash")
+# 
+# print(p)
+
+p <- binned_level.input.merge %>%
+ggplot(mapping = aes(
+  x = factor(type.bin,levels = c(
+    name_boom("nucleosome.bin_", seq(1, bin_number)),
+    name_boom("linker.bin_", seq(1,bin_number))
+  )),
+  y = !!variable,
+  group=1
+)) +
+geom_line(size=1,color="#ef858c") +
+# geom_point() +
+theme(axis.text.x = element_text(hjust = 1, angle = 45),
+      axis.title.x = element_blank()) +
+ylab(paste0(variable))+
+   theme(
+    panel.grid = element_blank(),
+    # panel.background = element_rect(fill = 'transparent', color = 'black'),
+    panel.background = element_rect(fill = 'transparent', color = 'white'),
+    # panel.border = element_rect(fill = 'transparent', color = 'black'),
+    axis.line = element_line(colour = "black"),
+    plot.title = element_text(hjust = 0.5),
+    axis.title=element_text(face = "bold",size = 10),
+    axis.text = element_text(face = "bold", size = 10),
+    legend.text = element_text(face = "bold"),
+    legend.title = element_text(face = "bold")
+  )+
+  scale_x_discrete(labels=extract_bin)+
+geom_vline(xintercept = c(paste0("nucleosome.bin_",bin_number),"linker.bin_1"), linetype = "dotdash")+
+  ylim(20,50)
+
+print(p)
+}
+
+
+# visual_method(paste0("/home/user/data/lit/project/6mA/feature/danpos/normed/",bin_number,"bin/C.elegans/"),
+#               "SMRT-list-SMRT-1",sym("GC(%)"))
+# visual_method(paste0("/home/user/data/lit/project/6mA/feature/danpos/normed/",bin_number,"bin/C.elegans/"),"SMRT-list-SMRT-1",sym("mA/(A+T)"))
+visual_method(paste0("/home/user/data/lit/project/6mA/feature/danpos/normed/",bin_number,"bin/C.elegans/"),"correct-strand-1",sym("mA/(A+T)"))
+visual_method(paste0("/home/user/data/lit/project/6mA/feature/danpos/normed/",bin_number,"bin/C.elegans/"),"correct-strand-2-shuf",sym("mA/(A+T)"))
+# visual_method(paste0("/home/user/data/lit/project/6mA/feature/danpos/normed/",bin_number,"bin/C.elegans/"),"correct-strand-3",sym("mA/(A+T)"))
+
+
+visual_method <- function(binned_level_dir,list,variable){
+# binned_level.input <-
+# read.table(paste0(binned_level_dir, "binned.level.txt")) %>% 
+# set_names("sample", "type", "list", "bin", "mA", "A","C","G","T","base_number","AT","GC","FreqSum") %>% dplyr::filter(list==!!list) %>% mutate(type.bin=paste0(type,".",bin)) %>% 
+#   mutate("mA/A"=mA/A,"mA/(A+T)"=mA/(A+T),"FreqSum/(A+T)"=FreqSum/(A+T),"FreqSum/A"=FreqSum/A,"base_sum"=A+T+G+C) %>% mutate("GC(%)"=(G+C)/base_sum,"AT(%)"=(A+T)/base_sum) 
+
+binned_level.input <-
+read.table(paste0(binned_level_dir, "binned.level.txt")) %>% 
+set_names("sample", "type", "list", "bin", "mA", "A","C","G","T","base_number","AT","GC","FreqSum") %>% dplyr::filter(list==!!list) %>% mutate(type.bin=paste0(type,".",bin)) %>% 
+  mutate("mA/A"=mA/A*10^6,"mA/(A+T)"=mA/(A+T)*10^6,"FreqSum/(A+T)"=FreqSum/(A+T)*10^6,"FreqSum/A"=FreqSum/A*10^6,"base_sum"=A+T+G+C) %>% mutate("GC(%)"=(G+C)/base_sum,"AT(%)"=(A+T)/base_sum) 
+
+# read.table(paste0(binned_level_dir, "binned.level.txt")) %>%
+# set_names("sample", "type", "list", "bin", "mA", "A","C","G","T","base_number","AT","GC","FreqSum") %>% group_by(type, list,bin) %>% summarise(mA = sum(mA),A = sum(A),T=sum(T),G=sum(G),C=sum(C),base_number=sum(base_number),FreqSum=sum(FreqSum)) %>% dplyr::filter(list==!!list) %>% mutate(type.bin=paste0(type,".",bin)) %>%
+#   mutate("mA/A"=mA/A,"mA/(A+T)"=mA/(A+T),"FreqSum/(A+T)"=FreqSum/(A+T),"FreqSum/A"=FreqSum/A,"base_sum"=A+T+G+C) %>% mutate("GC(%)"=(G+C)/base_sum,"AT(%)"=(A+T)/base_sum)-> binned_level.input.merge
+
+read.table(paste0(binned_level_dir, "binned.level.txt")) %>%
+set_names("sample", "type", "list", "bin", "mA", "A","C","G","T","base_number","AT","GC","FreqSum") %>% group_by(type, list,bin) %>% summarise(mA = sum(mA),A = sum(A),T=sum(T),G=sum(G),C=sum(C),base_number=sum(base_number),FreqSum=sum(FreqSum)) %>% dplyr::filter(list==!!list) %>% mutate(type.bin=paste0(type,".",bin)) %>%
+  mutate("mA/A"=mA/A*10^6,"mA/(A+T)"=mA/(A+T)*10^6,"FreqSum/(A+T)"=FreqSum/(A+T)*10^6,"FreqSum/A"=FreqSum/A*10^6,"base_sum"=A+T+G+C) %>% mutate("GC(%)"=(G+C)/base_sum,"AT(%)"=(A+T)/base_sum)-> binned_level.input.merge
+
+
+name_boom <- function(fixname, seq) {
+  name_all = NULL
+  for (i in seq) {
+    name = paste0(fixname, i)
+    name_all = c(name_all, name)
+  }
+  return(name_all)
+}
+
+extract_bin <- function(x){
+  str_split(x,"\\.",simplify = TRUE)[,2]
+  }
+
+# p <- binned_level.input %>%
+# ggplot(mapping = aes(
+#   x = factor(type.bin,levels = c(
+#     name_boom("nucleosome.bin_", seq(1, bin_number/2)),
+#     name_boom("linker.bin_", seq(1,bin_number/2))
+#   )),
+#   y = !!variable,
+#   color = sample,
+#   group = sample
+# )) +
+# geom_line(size=1) +
+# scale_color_manual(values=c("#ef858c","#5ea9d7"))+
+# # geom_point() +
+# theme(axis.text.x = element_text(hjust = 1, angle = 45),
+#       axis.title.x = element_blank()) +
+# ylab(paste0(variable))+
+#    theme(
+#     panel.grid = element_blank(),
+#     # panel.background = element_rect(fill = 'transparent', color = 'black'),
+#     panel.background = element_rect(fill = 'transparent', color = 'white'),
+#     # panel.border = element_rect(fill = 'transparent', color = 'black'),
+#     axis.line = element_line(colour = "black"),
+#     plot.title = element_text(hjust = 0.5),
+#     axis.title=element_text(face = "bold",size = 10),
+#     axis.text = element_text(face = "bold", size = 10),
+#     legend.text = element_text(face = "bold"),
+#     legend.title = element_text(face = "bold")
+#   )+
+#   scale_x_discrete(labels=extract_bin)+
+# geom_vline(xintercept = c(paste0("nucleosome.bin_",bin_number/2),"linker.bin_1"), linetype = "dotdash")
+# 
+# print(p)
+
+
+p <- binned_level.input.merge %>%
+ggplot(mapping = aes(
+  x = factor(type.bin,levels = c(
+    name_boom("nucleosome.bin_", seq(1, bin_number/2)),
+    name_boom("linker.bin_", seq(1,bin_number/2))
+  )),
+  y = !!variable,
+  group=1
+)) +
+geom_line(size=1,color="#ef858c") +
+# geom_point() +
+theme(axis.text.x = element_text(hjust = 1, angle = 45),
+      axis.title.x = element_blank()) +
+ylab(paste0(variable))+
+   theme(
+    panel.grid = element_blank(),
+    # panel.background = element_rect(fill = 'transparent', color = 'black'),
+    panel.background = element_rect(fill = 'transparent', color = 'white'),
+    # panel.border = element_rect(fill = 'transparent', color = 'black'),
+    axis.line = element_line(colour = "black"),
+    plot.title = element_text(hjust = 0.5),
+    axis.title=element_text(face = "bold",size = 10),
+    axis.text = element_text(face = "bold", size = 10),
+    legend.text = element_text(face = "bold"),
+    legend.title = element_text(face = "bold")
+  )+
+  scale_x_discrete(labels=extract_bin)+
+geom_vline(xintercept = c(paste0("nucleosome.bin_",bin_number/2),"linker.bin_1"), linetype = "dotdash")+
+  ylim(20,50)
+
+print(p)
+}
+
+
+
+# visual_method(paste0("/home/user/data/lit/project/6mA/feature/danpos/normed/",bin_number,"bin/C.elegans/merge/"),
+              # "SMRT-list-SMRT-1",sym("GC(%)"))
+# visual_method(paste0("/home/user/data/lit/project/6mA/feature/danpos/normed/",bin_number,"bin/C.elegans/merge/"),"SMRT-list-SMRT-1",sym("mA/(A+T)"))
+visual_method(paste0("/home/user/data/lit/project/6mA/feature/danpos/normed/",bin_number,"bin/C.elegans/merge/"),"correct-strand-1",sym("mA/(A+T)"))
+visual_method(paste0("/home/user/data/lit/project/6mA/feature/danpos/normed/",bin_number,"bin/C.elegans/merge/"),"correct-strand-2-shuf",sym("mA/(A+T)"))
+# visual_method(paste0("/home/user/data/lit/project/6mA/feature/danpos/normed/",bin_number,"bin/C.elegans/merge/"),"correct-strand-3",sym("mA/(A+T)"))
+
+```
+
+
+
+
+```{r C.reinhardti}
+visual_method <- function(binned_level_dir,variable){
+binned_level.input <-
+read.table(paste0(binned_level_dir, "binned.level.txt")) %>% 
+# read.table("/home/user/data/lit/project/6mA/feature/danpos/normed/method_1_1/binned.level.txt")%>%
+set_names("sample", "type", "bin","A","T","G","C","AT","GC") %>% mutate(type.bin=paste0(type,".",bin)) %>% mutate(base_number=A+C+G+T) %>%
+  mutate("AT(%)"=(A+T)/base_number)  %>% mutate("GC(%)"=(G+C)/base_number) 
+
+name_boom <- function(fixname, seq) {
+  name_all = NULL
+  for (i in seq) {
+    name = paste0(fixname, i)
+    name_all = c(name_all, name)
+  }
+  return(name_all)
+}
+
+extract_bin <- function(x){
+  str_split(x,"\\.",simplify = TRUE)[,2]
+  }
+
+p <- binned_level.input %>%
+ggplot(mapping = aes(
+  x = factor(type.bin,levels = c(
+    # name_boom("linker.bin_", seq(1, 5)),
+    name_boom("nucleosome.bin_", seq(1, 10)),
+    # name_boom("linker.bin_", seq(6,10))
+    name_boom("linker.bin_", seq(1,10))
+  )),
+  y = !!variable,
+  color = sample,
+  group = sample
+)) +
+geom_line() +
+# geom_point() +
+scale_color_manual(values=c("#ef858c","#5ea9d7"))+
+theme(axis.text.x = element_text(hjust = 1, angle = 45),
+      axis.title.x = element_blank()) +
+ylab(paste0(variable))+
+    theme(
+    panel.grid = element_blank(),
+    # panel.background = element_rect(fill = 'transparent', color = 'black'),
+    panel.background = element_rect(fill = 'transparent', color = 'white'),
+    # panel.border = element_rect(fill = 'transparent', color = 'black'),
+    axis.line = element_line(colour = "black"),
+    plot.title = element_text(hjust = 0.5),
+    axis.title=element_text(face = "bold",size = 10),
+    axis.text = element_text(face = "bold", size = 10),
+    legend.text = element_text(face = "bold"),
+    legend.title = element_text(face = "bold")
+  )+
+geom_vline(xintercept = c("nucleosome.bin_10","linker.bin_1"), linetype = "dotdash")+
+  scale_x_discrete(labels=extract_bin)
+  # theme(plot.margin = margin(0.5,0.5,1.5,0.5,'cm')) #自定义图片上左下右的边框宽度
+
+
+print(p)
+
+# p +
+#   coord_cartesian(clip = 'off',ylim = c(0.59,0.68))+ #在非图形区域绘图,且要定好y轴范围
+#   annotate('text',x="nucleosome.bin_5",y=0.55,label='nucleosome',size=3)+
+#   annotate('segment',x="nucleosome.bin_1",xend="nucleosome.bin_10",y=0.55,yend=0.55,
+#            arrow = arrow(ends = "both", type="closed",length = unit(0.2,"cm")))+
+#   annotate('segment',x="linker.bin_1",xend="linker.bin_10",y=0.55,yend=0.55,
+#            arrow = arrow(ends = "both", type="closed",length = unit(0.2,"cm")))+
+#   annotate('text',x="linker.bin_5",y=0.55,label='linker',size=3)
+# 
+# print(p)
+
+}
+
+visual_method("/home/user/data2/lit/project/6mA/reproduce/output/feature/iNPS/C.reinhardti/",sym("AT(%)"))
+
+visual_method("/home/user/data2/lit/project/6mA/reproduce/output/feature/iNPS/C.reinhardti/",sym("GC(%)"))
+
+
+```
+
+```{r C.reinhardti T.thermophila}
+visual_method <- function(binned_level_dir,variable){
+binned_level.input <-
+read.table(paste0(binned_level_dir, "binned.level.txt")) %>% 
+# read.table("/home/user/data/lit/project/6mA/feature/danpos/normed/method_1_1/binned.level.txt")%>%
+set_names("sample", "type", "bin","A","C","G","T","base_number") %>% mutate(type.bin=paste0(type,".",bin)) %>%
+  mutate(base_sum=A+C+G+T) %>%
+  mutate("AT(%)"=(A+T)/base_sum)  %>% mutate("GC(%)"=(G+C)/base_sum)
+  # mutate("AT(%)"=(A+T)/base_number)  %>% mutate("GC(%)"=(G+C)/base_number)
+
+name_boom <- function(fixname, seq) {
+  name_all = NULL
+  for (i in seq) {
+    name = paste0(fixname, i)
+    name_all = c(name_all, name)
+  }
+  return(name_all)
+}
+
+extract_bin <- function(x){
+  str_split(x,"\\.",simplify = TRUE)[,2]
+  }
+
+p <- binned_level.input %>%
+ggplot(mapping = aes(
+  x = factor(type.bin,levels = c(
+    # name_boom("linker.bin_", seq(1, 5)),
+    name_boom("nucleosome.bin_", seq(1, 10)),
+    # name_boom("linker.bin_", seq(6,10))
+    name_boom("linker.bin_", seq(1,10))
+  )),
+  y = !!variable,
+  color = sample,
+  group = sample
+)) +
+geom_line(size=1) +
+# geom_point() +
+scale_color_manual(values=c("#ef858c","#5ea9d7"))+
+theme(axis.text.x = element_text(hjust = 1, angle = 45),
+      axis.title.x = element_blank()) +
+ylab(paste0(variable))+
+    theme(
+    panel.grid = element_blank(),
+    # panel.background = element_rect(fill = 'transparent', color = 'black'),
+    panel.background = element_rect(fill = 'transparent', color = 'white'),
+    # panel.border = element_rect(fill = 'transparent', color = 'black'),
+    axis.line = element_line(colour = "black"),
+    plot.title = element_text(hjust = 0.5),
+    axis.title=element_text(face = "bold",size = 10),
+    axis.text = element_text(face = "bold", size = 10),
+    legend.text = element_text(face = "bold"),
+    legend.title = element_text(face = "bold")
+  )+
+geom_vline(xintercept = c("nucleosome.bin_10","linker.bin_1"), linetype = "dotdash")+
+  scale_x_discrete(labels=extract_bin)
+  # theme(plot.margin = margin(0.5,0.5,1.5,0.5,'cm')) #自定义图片上左下右的边框宽度
+
+
+print(p)
+
+# p +
+#   coord_cartesian(clip = 'off',ylim = c(0.59,0.68))+ #在非图形区域绘图,且要定好y轴范围
+#   annotate('text',x="nucleosome.bin_5",y=0.55,label='nucleosome',size=3)+
+#   annotate('segment',x="nucleosome.bin_1",xend="nucleosome.bin_10",y=0.55,yend=0.55,
+#            arrow = arrow(ends = "both", type="closed",length = unit(0.2,"cm")))+
+#   annotate('segment',x="linker.bin_1",xend="linker.bin_10",y=0.55,yend=0.55,
+#            arrow = arrow(ends = "both", type="closed",length = unit(0.2,"cm")))+
+#   annotate('text',x="linker.bin_5",y=0.55,label='linker',size=3)
+# 
+# print(p)
+
+}
+
+
+visual_method("/home/user/data2/lit/project/6mA/reproduce/output/feature/iNPS/T.thermophila/",sym("GC(%)"))
+
+visual_method("/home/user/data2/lit/project/6mA/reproduce/output/feature/iNPS/C.reinhardtii/",sym("GC(%)"))
+
+```
+
+
+
+# method 2
+
+```{r nucleosome and its neighbor}
+visual_method_2 <- function(binned_level_dir) {
+  binned_level <-
+    read.table(paste0(binned_level_dir, "binned.level.txt"))
+  binned_level$V1 %>% str_split_fixed(., "\\.", 2) %>% data.frame() %>% mutate(binned_level) %>%
+    set_names("sample", "bin", "sample.bin", "mA", "A", "FreqSum") -> binned_level.input
+  
+  name_boom <- function(fixname, seq) {
+    name_all = NULL
+    for (i in seq) {
+      name = paste0(fixname, i)
+      name_all = c(name_all, name)
+    }
+    return(name_all)
+  }
+  
+  p <- binned_level.input %>%
+    ggplot(mapping = aes(
+      x = factor(bin, levels = c(
+        name_boom("linker.bin_", seq(1, 5)),
+        name_boom("nucleosome.bin_", seq(1, 10)),
+        name_boom("linker.bin_", seq(6,10))
+      )),
+      y = mA,
+      color = sample,
+      group = sample
+    )) +
+    geom_line() +
+    geom_point() +
+    theme(axis.text.x = element_text(hjust = 1, angle = 45),
+          axis.title.x = element_blank()) +
+    ylab("6mA")
+  
+  print(p)
+  
+  ggsave(
+    p,
+    filename = paste0(binned_level_dir, "binned_level_6mA.png"),
+    width = 5,
+    height = 3
+  )
+  
+  p <- binned_level.input %>%
+    ggplot(mapping = aes(
+      x = factor(bin, levels = c(
+        name_boom("linker.bin_", seq(1, 5)),
+        name_boom("nucleosome.bin_", seq(1, 10)),
+        name_boom("linker.bin_", seq(6,10))
+      )),
+      y = mA / A,
+      color = sample,
+      group = sample
+    )) +
+    geom_line() +
+    geom_point() +
+    theme(axis.text.x = element_text(hjust = 1, angle = 45),
+          axis.title.x = element_blank()) +
+    ylab("6mA/A") +
+    theme(legend.key.size = unit(0.2, "pt"))
+  
+  ggsave(
+    p,
+    filename = paste0(binned_level_dir, "binned_level_6mA2A.png"),
+    width = 5,
+    height = 3
+  )
+  
+  print(p)
+  
+  p <- binned_level.input %>%
+    ggplot(mapping = aes(
+      x = factor(bin, levels = c(
+        name_boom("linker.bin_", seq(1, 5)),
+        name_boom("nucleosome.bin_", seq(1, 10)),
+        name_boom("linker.bin_", seq(6,10))
+      )),
+      y = FreqSum / A,
+      color = sample,
+      group = sample
+    )) +
+    geom_line() +
+    geom_point() +
+    theme(axis.text.x = element_text(hjust = 1, angle = 45),
+          axis.title.x = element_blank()) +
+    ylab("FreqSum/A") +
+    theme(legend.key.size = unit(0.2, "pt"))
+  
+  print(p)
+  
+  ggsave(
+    p,
+    filename = paste0(binned_level_dir, "binned_level_FreqSum.png"),
+    width = 5,
+    height = 3
+  )
+  
+}
+visual_method_2("/home/user/data/lit/project/6mA/feature/iNPS/method_2/")
+visual_method_2("/home/user/data/lit/project/6mA/feature/danpos/original/method_2/")
+
+visual_method_2("/home/user/data/lit/project/6mA/feature/danpos/normed/method_2/")
+
+```
+
+```{r compare methods and merge samples}
+visual_method_merge <- function(binned_level_dir_1,binned_level_dir_2,binned_level_dir_3) {
+  
+  get_level_input <- function(binned_level_dir) {
+    binned_level <-
+      read.table(paste0(binned_level_dir, "binned.level.txt"))
+    binned_level$V1 %>% str_split_fixed(., "\\.", 2) %>% data.frame() %>% mutate(binned_level) %>%
+      set_names("sample", "bin", "sample.bin", "mA", "A", "FreqSum") -> binned_level.input
+    return(binned_level.input)
+  }
+  
+  name_boom <- function(fixname, seq) {
+    name_all = NULL
+    for (i in seq) {
+      name = paste0(fixname, i)
+      name_all = c(name_all, name)
+    }
+    return(name_all)
+  }
+  
+  binned_level.input <- rbind(get_level_input(binned_level_dir_1) %>% mutate(method="iNPS"),
+                              get_level_input(binned_level_dir_2) %>% mutate(method="danpos"),
+                              get_level_input(binned_level_dir_3) %>% mutate(method="danpos_normed"))
+  
+  binned_level.input %>% group_by(bin, method) %>% summarise(mA = mean(mA),
+                                                             A = mean(A),
+                                                             FreqSum = mean(FreqSum)) -> binned_level.input.merge
+  
+  p <-
+    binned_level.input %>% dplyr::filter(sample == "PC10_LY_MCC-M1") %>%
+    ggplot(mapping = aes(
+      x = factor(bin, levels = c(
+        name_boom("linker.bin_", seq(1, 5)),
+        name_boom("nucleosome.bin_", seq(1, 10)),
+        name_boom("linker.bin_", seq(6,10))
+      )),
+      y = mA / A,
+      color = method,
+      group = method
+    )) +
+    geom_line() +
+    geom_point() +
+    theme(axis.text.x = element_text(hjust = 1, angle = 45),
+          axis.title.x = element_blank()) +
+    ylab("6mA/A") +
+    ggtitle("sample PC10_LY_MCC-M1") +
+    theme(plot.title = element_text(hjust = 0.5))
+  theme(legend.key.size = unit(0.2, "pt"))
+  
+  print(p)
+  
+  p <-
+    binned_level.input %>% dplyr::filter(sample == "PC10_LY_MCC-M2") %>%
+    ggplot(mapping = aes(
+       x = factor(bin, levels = c(
+        name_boom("linker.bin_", seq(1, 5)),
+        name_boom("nucleosome.bin_", seq(1, 10)),
+        name_boom("linker.bin_", seq(6,10))
+      )),
+      y = mA / A,
+      color = method,
+      group = method
+    )) +
+    geom_line() +
+    geom_point() +
+    theme(axis.text.x = element_text(hjust = 1, angle = 45),
+          axis.title.x = element_blank()) +
+    ylab("6mA/A") +
+    ggtitle("sample PC10_LY_MCC-M2") +
+    theme(plot.title = element_text(hjust = 0.5))
+  theme(legend.key.size = unit(0.2, "pt"))
+  
+  print(p)
+  
+  p <-
+    binned_level.input.merge %>% 
+    ggplot(mapping = aes(
+       x = factor(bin, levels = c(
+        name_boom("linker.bin_", seq(1, 5)),
+        name_boom("nucleosome.bin_", seq(1, 10)),
+        name_boom("linker.bin_", seq(6,10))
+      )),
+      y = mA / A,
+      color = method,
+      group = method
+    )) +
+    geom_line() +
+    geom_point() +
+    theme(axis.text.x = element_text(hjust = 1, angle = 45),
+          axis.title.x = element_blank()) +
+    ylab("6mA/A") +
+    ggtitle("sample mean") +
+    theme(plot.title = element_text(hjust = 0.5))
+  theme(legend.key.size = unit(0.2, "pt"))
+  
+  print(p)
+  
+  ggsave(
+    p,
+    filename = paste0("binned_level_6mA2A.method_2.png"),
+    width = 5,
+    height = 3
+  )
+  
+}
+
+
+visual_method_merge("/home/user/data/lit/project/6mA/feature/iNPS/method_2/",
+                    "/home/user/data/lit/project/6mA/feature/danpos/original/method_2/",
+                    "/home/user/data/lit/project/6mA/feature/danpos/normed/method_2/")
+```
+
+# tss around feature
+
+```{r tss around mA level and nucleosome occupancy}
+tss_level_dir="/home/user/data/lit/project/6mA/feature/tss/"
+tss_level <- read.table(paste0(tss_level_dir, "tss.mAlevel.occu.txt"))
+
+tss_level$V1 %>% str_split_fixed(., "\\.", 3) %>% data.frame() %>% mutate(tss_level) %>% .[,c(3,5:ncol(.))] %>% 
+    set_names("bin","mA", "A", "FreqSum","occupancy_1","occupancy_2") -> tss_level.input
+  name_boom <- function(fixname, seq) {
+    name_all = NULL
+    for (i in seq) {
+      name = paste0(fixname, i)
+      name_all = c(name_all, name)
+    }
+    return(name_all)
+  }
+  
+tss_level.input %>%
+    ggplot(mapping = aes(
+      x = factor(bin,levels = name_boom("bin_",seq(1,200))),
+      y = mA/A
+    )) +
+    geom_line(group=1) +
+    # geom_point() +
+    theme(axis.text.x = element_text(hjust = 1, angle = 45),
+          axis.title.x = element_blank())
+
+tss_level.input %>%
+    ggplot(mapping = aes(
+      x = factor(bin,levels = name_boom("bin_",seq(1,200))),
+      y = FreqSum
+    )) +
+    geom_line(group=1) +
+    # geom_point() +
+    theme(axis.text.x = element_text(hjust = 1, angle = 45),
+          axis.title.x = element_blank())
+
+tss_level.input %>%
+    ggplot(mapping = aes(
+      x = factor(bin,levels = name_boom("bin_",seq(1,200))),
+      y = occupancy_1
+    )) +
+    geom_line(group=1) +
+    # geom_point() +
+    theme(axis.text.x = element_text(hjust = 1, angle = 45),
+          axis.title.x = element_blank())
+
+tss_level.input %>%
+    ggplot(mapping = aes(
+      x = factor(bin,levels = name_boom("bin_",seq(1,200))),
+      y = occupancy_2
+    )) +
+    geom_line(group=1) +
+    # geom_point() +
+    theme(axis.text.x = element_text(hjust = 1, angle = 45),
+          axis.title.x = element_blank())
+```
+
+# motif stat
+```{r motif stat}
+library(dplyr)
+library(ggsci)
+# gather and spead
+library(tidyr)
+
+motif_stat <- function(dir,sample){
+input <-read.table(paste0(dir, "motif.stat.txt"))
+input
+# vignette("ggsci")
+input %>% dplyr::filter(V1==!!sample) %>%
+  dplyr::group_by(V2) %>%
+  dplyr::mutate(perc = V4 / sum(V4))  %>%
+  ggplot(aes(x = factor(
+    V3,
+    levels = c("aaa",
+      "aat",
+      "taa",
+      "tat",
+      "aac",
+      "aag",
+      "caa",
+      "gaa",
+      "cac",
+      "cag",
+      "cat",
+      "gac",
+      "gag",
+      "gat",
+      "tac",
+      "tag"
+    )), 
+    y = perc,
+    fill = V2
+  )) + geom_bar(
+    stat = "identity",
+    position = position_dodge(0.8),
+    # alpha=0.6,
+    width = 0.8
+  ) +
+  labs(title=paste0(sample),x = "Motif", y = "Percentage (%)") +
+  scale_y_continuous(expand = c(0, 0)) +
+  labs(fill = "Type") +
+  # scale_fill_brewer(palette = "Dark2") +
+  # scale_fill_igv()+
+  scale_fill_manual(values = c("#8FBC94", "#548687"))+
+  theme(
+    panel.grid=element_blank(),
+    panel.background=element_rect(fill='transparent', color='white'),
+    legend.position = c(1, 1),
+    legend.justification = c(1,1),
+    plot.title = element_text(hjust = 0.5),
+    # axis.title=element_text(face = "bold",size = 14)
+    axis.text = element_text(face = "bold",size = 10)
+  ) -> p
+
+print(p)
+
+input %>% dplyr::filter(V1==!!sample)  %>%  dplyr::group_by(V2) %>%
+  dplyr::mutate(perc = V4 / sum(V4),V4=NULL) %>% spread(key=V2,value=perc) %>% mutate("diff"=linker-nucleosome) %>% 
+  ggplot(aes(x=reorder(V3,diff),y=diff,fill=diff)) +
+  geom_bar(stat = "identity",colour="black",width = 1,position = position_dodge(1)) +
+  xlab(paste0(sample))+
+  ylab("Diff (linker-nucleosome)")+
+  coord_flip() +
+  labs(fill="Diff")+
+  # scale_fill_gradient2(low="#366488",high="red",mid="white",midpoint = 0,name="Diff\n")+
+  theme(
+    panel.grid = element_blank(),
+    panel.background = element_rect(fill = 'transparent', color = 'white'),
+    plot.title = element_text(hjust = 0.5),
+    axis.ticks = element_blank(),
+    axis.title=element_text(face = "bold",size = 10),
+    axis.text = element_text(face = "bold", size = 10),
+    legend.text = element_text(face = "bold"),
+    legend.title = element_text(face = "bold")
+  ) -> p
+
+print(p)
+
+
+input %>% dplyr::filter(V1==!!sample) %>%
+  ggplot(aes(x = V3, y = V4, fill = V2)) + geom_bar(stat = "identity",
+                                                    position = position_dodge(0.8),
+                                                    # alpha=0.6,
+                                                    width = 0.8) +
+  labs(title = paste0(sample), x = "Motif", y = "Number") +
+  scale_y_continuous(expand = c(0, 0)) +
+  labs(fill = "Type") +
+  # scale_fill_brewer(palette = "Dark2") +
+  # scale_fill_igv()+
+  scale_fill_manual(values = c("#8FBC94", "#548687")) +
+  theme(
+    panel.grid = element_blank(),
+    panel.background = element_rect(fill = 'transparent', color = 'white'),
+    legend.position = c(1, 1),
+    legend.justification = c(1, 1),
+    plot.title = element_text(hjust = 0.5),
+    # axis.title=element_text(face = "bold",size = 14)
+    axis.text = element_text(face = "bold", size = 10)
+  ) -> p
+print(p)
+}
+
+motif_stat("/home/user/data/lit/project/6mA/feature/iNPS/motif/danpos/","PC10_LY_MCC-M1")
+motif_stat("/home/user/data/lit/project/6mA/feature/iNPS/motif/danpos/","PC10_LY_MCC-M2")
+motif_stat("/home/user/data/lit/project/6mA/feature/iNPS/motif/C.reinhardti/","C.reinhardtii")
+
+fisher_motif <- function(dir,sample){
+
+  input <-read.table(paste0(dir, "motif.stat.txt"))
+
+  input %>% dplyr::filter(V1==!!sample) %>%
+  dplyr::group_by(V2) %>%
+  dplyr::mutate(sum=sum(V4)) -> input
+  # two digits at least
+  # options(scipen=1)
+  # create an empty list
+  list=list()
+  for (i in c("aaa",
+      "aat",
+      "taa",
+      "tat",
+      "aac",
+      "aag",
+      "caa",
+      "gaa",
+      "cac",
+      "cag",
+      "cat",
+      "gac",
+      "gag",
+      "gat",
+      "tac",
+      "tag")){
+    fisher.test(matrix(c(as.numeric(input[input$V3==i & input$V2=="nucleosome","V4"]),
+    as.numeric(input[input$V3==i & input$V2=="nucleosome","sum"]),
+    as.numeric(input[input$V3==i & input$V2=="linker","V4"]),
+    as.numeric(input[input$V3==i & input$V2=="linker","sum"])),ncol=2,nrow=2)
+    )$p.value -> p.value
+    list[[i]]=(p.value)
+    }
+  
+  return(list)
+}
+
+fisher_motif("/home/user/data/lit/project/6mA/feature/iNPS/motif/C.reinhardti/","C.reinhardtii") -> list.c
+fisher_motif("/home/user/data/lit/project/6mA/feature/iNPS/motif/danpos/","PC10_LY_MCC-M1") -> list.1
+fisher_motif("/home/user/data/lit/project/6mA/feature/iNPS/motif/danpos/","PC10_LY_MCC-M2") -> list.2
+
+```
+
+# fuzziness score distribution 
+```{r fuzziness score distribution}
+
+fuzz_dis <- function(dir,title){
+mA_list <- read.table(dir,header = T)
+mA_list
+ggplot(mA_list,aes(x=fuzziness_score))+geom_density(alpha=0.2,size=0.5,linetype=1)+theme_classic()+
+labs(x="Fuzziness score",y="Density",title = title)+
+  theme(plot.title = element_text(hjust=0.5))
+
+}
+
+fuzz_dis("/home/user/data2/lit/project/6mA/danpos/normed/PC10_LY_MCC-M1/pooled/out.uniq.rmdup.nameSorted.smooth.positions.xls","PC10_LY_MCC-M1")
+fuzz_dis("/home/user/data2/lit/project/6mA/danpos/normed/PC10_LY_MCC-M2/pooled/out.uniq.rmdup.nameSorted.smooth.positions.xls","PC10_LY_MCC-M2")
+```
+
+# filter based on fuzziness score; binned occupancy
+
+```{r show 10 bins each nucleosome and linker}
+
+visual_method <- function(binned_level_dir,list,variable){
+binned_level.input <-
+read.table(paste0(binned_level_dir, "binned.level.txt")) %>% 
+set_names("sample", "type", "list", "bin", "mA", "A","C","G","T","base_number","AT","GC","FreqSum","OccuSum") %>% dplyr::filter(list==!!list) %>% mutate(type.bin=paste0(type,".",bin)) %>% 
+  mutate("mA/A"=mA/A,"mA/(A+T)"=mA/(A+T),"FreqSum/(A+T)"=FreqSum/(A+T),"FreqSum/A"=FreqSum/A) %>% mutate("GC(%)"=(G+C)/base_number,"AT(%)"=(A+T)/base_number) %>% mutate("GC_all"=(G+C)/(A+T+C+G),"AT_all"=(A+T)/(A+T+C+G))
+
+name_boom <- function(fixname, seq) {
+  name_all = NULL
+  for (i in seq) {
+    name = paste0(fixname, i)
+    name_all = c(name_all, name)
+  }
+  return(name_all)
+}
+
+extract_bin <- function(x){
+  str_split(x,"\\.",simplify = TRUE)[,2]
+  }
+
+p <- binned_level.input %>%
+ggplot(mapping = aes(
+  x = factor(type.bin,levels = c(
+    # name_boom("linker.bin_", seq(1, 5)),
+    name_boom("nucleosome.bin_", seq(1, 10)),
+    # name_boom("linker.bin_", seq(6,10))
+    name_boom("linker.bin_", seq(1,10))
+  )),
+  y = !!variable,
+  color = sample,
+  group = sample
+)) +
+geom_line() +
+scale_color_manual(values=c("#ef858c","#5ea9d7"))+
+# geom_point() +
+theme(axis.text.x = element_text(hjust = 1, angle = 45),
+      axis.title.x = element_blank()) +
+ylab(paste0(variable))+
+   theme(
+    panel.grid = element_blank(),
+    # panel.background = element_rect(fill = 'transparent', color = 'black'),
+    panel.background = element_rect(fill = 'transparent', color = 'white'),
+    # panel.border = element_rect(fill = 'transparent', color = 'black'),
+    axis.line = element_line(colour = "black"),
+    plot.title = element_text(hjust = 0.5),
+    axis.title=element_text(face = "bold",size = 10),
+    axis.text = element_text(face = "bold", size = 10),
+    legend.text = element_text(face = "bold"),
+    legend.title = element_text(face = "bold")
+  )+
+  scale_x_discrete(labels=extract_bin)+
+geom_vline(xintercept = c("nucleosome.bin_10","linker.bin_1"), linetype = "dotdash")
+
+print(p)
+}
+
+
+visual_method("/home/user/data/lit/project/6mA/feature/danpos/normed/method_3/","wt1",sym("GC(%)"))
+visual_method("/home/user/data/lit/project/6mA/feature/danpos/normed/method_3/","wt1",sym("AT(%)"))
+visual_method("/home/user/data/lit/project/6mA/feature/danpos/normed/method_3/","wt1",sym("mA/(A+T)"))
+visual_method("/home/user/data/lit/project/6mA/feature/danpos/normed/method_3/","wt1",sym("mA/A"))
+visual_method("/home/user/data/lit/project/6mA/feature/danpos/normed/method_3/","wt1",sym("FreqSum/(A+T)"))
+visual_method("/home/user/data/lit/project/6mA/feature/danpos/normed/method_3/","wt1",sym("FreqSum/A"))
+visual_method("/home/user/data/lit/project/6mA/feature/danpos/normed/method_3/","wt1",sym("OccuSum"))
+
+
+visual_method("/home/user/data/lit/project/6mA/feature/danpos/normed/method_3_1/","wt1",sym("GC(%)"))
+visual_method("/home/user/data/lit/project/6mA/feature/danpos/normed/method_3_1/","wt1",sym("AT(%)"))
+visual_method("/home/user/data/lit/project/6mA/feature/danpos/normed/method_3_1/","wt1",sym("mA/(A+T)"))
+visual_method("/home/user/data/lit/project/6mA/feature/danpos/normed/method_3_1/","wt1",sym("mA/A"))
+visual_method("/home/user/data/lit/project/6mA/feature/danpos/normed/method_3_1/","wt1",sym("FreqSum/(A+T)"))
+visual_method("/home/user/data/lit/project/6mA/feature/danpos/normed/method_3_1/","wt1",sym("FreqSum/A"))
+visual_method("/home/user/data/lit/project/6mA/feature/danpos/normed/method_3_1/","wt1",sym("OccuSum"))
+
+visual_method("/home/user/data/lit/project/6mA/feature/danpos/normed/method_3_2/","wt1",sym("GC(%)"))
+visual_method("/home/user/data/lit/project/6mA/feature/danpos/normed/method_3_2/","wt1",sym("AT(%)"))
+visual_method("/home/user/data/lit/project/6mA/feature/danpos/normed/method_3_2/","wt1",sym("mA/(A+T)"))
+visual_method("/home/user/data/lit/project/6mA/feature/danpos/normed/method_3_2/","wt1",sym("mA/A"))
+visual_method("/home/user/data/lit/project/6mA/feature/danpos/normed/method_3_2/","wt1",sym("FreqSum/(A+T)"))
+visual_method("/home/user/data/lit/project/6mA/feature/danpos/normed/method_3_2/","wt1",sym("FreqSum/A"))
+visual_method("/home/user/data/lit/project/6mA/feature/danpos/normed/method_3_2/","wt1",sym("OccuSum"))
+```
+
+# reproduce
+```{r}
+
+extract_bin <- function(x){
+  str_split(x,"\\.",simplify = TRUE)[,4]
+}
+
+name_boom <- function(fixname, seq) {
+  name_all = NULL
+  for (i in seq) {
+    name = paste0(fixname, i)
+    name_all = c(name_all, name)
+  }
+  return(name_all)
+}
+
+binned_level_10bin <- read.table("/home/user/data2/lit/DATA/project/6mA/reproduce/output/6mASCOPE/Algae/center/binned.level.txt") %>% set_names("sample", "ppm", "UPCI", "DOWNCI")
+
+binned_level_10bin %>% 
+ggplot(aes(x=factor(sample,levels = c(
+    name_boom("C.reinhardtii.nucleosome.bin_", seq(1, 10)),
+    name_boom("C.reinhardtii.linker.bin_", seq(1,10))
+  )),y=6+ppm)) + 
+    geom_errorbar(aes(ymin=6+UPCI, ymax=6+DOWNCI), width=.5) +
+    geom_line() +
+    geom_point()+
+    theme_classic()+
+  scale_x_discrete(labels=extract_bin)+
+  theme(axis.text.x = element_text(hjust = 1, angle = 45),
+      axis.title.x = element_blank()) +
+  ylab("log10(ppm)")
+
+binned_level <- read.table("/home/user/data2/lit/DATA/project/6mA/reproduce/output/6mASCOPE/Algae/center/binned.level.merge.txt") %>% set_names("sample", "ppm", "UPCI", "DOWNCI")
+
+binned_level %>%
+ggplot(aes(x=factor(sample,levels = c(
+    name_boom("C.reinhardtii.nucleosome.bin_", seq(1, 5)),
+    name_boom("C.reinhardtii.linker.bin_", seq(1,5))
+  )),y=6+ppm)) +
+    geom_errorbar(aes(ymin=6+UPCI, ymax=6+DOWNCI), width=.5) +
+    geom_line() +
+    geom_point()+
+    theme_classic()+
+  scale_x_discrete(labels=extract_bin)+
+  # scale_y_continuous(labels="")+
+  theme(axis.text.x = element_text(hjust = 1, angle = 45),
+      axis.title.x = element_blank()) +
+  ylab("log10(ppm)")
+
+
+
+```
+
+
+```{r}
+visual_method <- function(binned_level_dir,list,variable){
+binned_level.input <-
+read.table(paste0(binned_level_dir, "binned.level.txt")) %>% 
+set_names("sample", "type", "list", "bin", "mA", "A","C","G","T","base_number","AT","GC","FreqSum") %>% dplyr::filter(list==!!list) %>% mutate(type.bin=paste0(type,".",bin)) %>% 
+  mutate("mA/A"=mA/A,"mA/(A+T)"=mA/(A+T),"FreqSum/(A+T)"=FreqSum/(A+T),"FreqSum/A"=FreqSum/A,"base_sum"=A+T+G+C) %>% mutate("GC(%)"=(G+C)/base_sum,"AT(%)"=(A+T)/base_sum) 
+
+
+name_boom <- function(fixname, seq) {
+  name_all = NULL
+  for (i in seq) {
+    name = paste0(fixname, i)
+    name_all = c(name_all, name)
+  }
+  return(name_all)
+}
+
+extract_bin <- function(x){
+  str_split(x,"\\.",simplify = TRUE)[,2]
+  }
+
+p <- binned_level.input %>%
+ggplot(mapping = aes(
+  x = factor(type.bin,levels = c(
+    # name_boom("linker.bin_", seq(1, 5)),
+    name_boom("nucleosome.bin_", seq(1, 10)),
+    # name_boom("linker.bin_", seq(6,10))
+    name_boom("linker.bin_", seq(1,10))
+  )),
+  y = !!variable,
+  color = sample,
+  group = sample
+)) +
+geom_line(size=1) +
+scale_color_manual(values=c("#ef858c","#5ea9d7"))+
+# geom_point() +
+theme(axis.text.x = element_text(hjust = 1, angle = 45),
+      axis.title.x = element_blank()) +
+ylab(paste0(variable))+
+   theme(
+    panel.grid = element_blank(),
+    # panel.background = element_rect(fill = 'transparent', color = 'black'),
+    panel.background = element_rect(fill = 'transparent', color = 'white'),
+    # panel.border = element_rect(fill = 'transparent', color = 'black'),
+    axis.line = element_line(colour = "black"),
+    plot.title = element_text(hjust = 0.5),
+    axis.title=element_text(face = "bold",size = 10),
+    axis.text = element_text(face = "bold", size = 10),
+    legend.text = element_text(face = "bold"),
+    legend.title = element_text(face = "bold")
+  )+
+  scale_x_discrete(labels=extract_bin)+
+geom_vline(xintercept = c("nucleosome.bin_10","linker.bin_1"), linetype = "dotdash")
+
+print(p)
+}
+
+
+visual_method("/home/user/data/lit/project/6mA/feature/iNPS/C.reinhardtii/","SMRT-list-Algae",sym("GC(%)"))
+visual_method("/home/user/data/lit/project/6mA/feature/iNPS/C.reinhardtii/","SMRT-list-Algae",sym("mA/(A+T)"))
+visual_method("/home/user/data/lit/project/6mA/feature/iNPS/T.thermophila/","SMRT-list-Tetrahymena",sym("GC(%)"))
+visual_method("/home/user/data/lit/project/6mA/feature/iNPS/T.thermophila/","SMRT-list-Tetrahymena",sym("mA/(A+T)"))
+
+visual_method <- function(binned_level_dir,list,variable){
+binned_level.input <-
+read.table(paste0(binned_level_dir, "binned.level.txt")) %>% 
+set_names("sample", "type", "list", "bin", "mA", "A","C","G","T","base_number","AT","GC","FreqSum") %>% dplyr::filter(list==!!list) %>% mutate(type.bin=paste0(type,".",bin)) %>% 
+  mutate("mA/A"=mA/A,"mA/(A+T)"=mA/(A+T),"FreqSum/(A+T)"=FreqSum/(A+T),"FreqSum/A"=FreqSum/A,"base_sum"=A+T+G+C) %>% mutate("GC(%)"=(G+C)/base_sum,"AT(%)"=(A+T)/base_sum) 
+
+name_boom <- function(fixname, seq) {
+  name_all = NULL
+  for (i in seq) {
+    name = paste0(fixname, i)
+    name_all = c(name_all, name)
+  }
+  return(name_all)
+}
+
+extract_bin <- function(x){
+  str_split(x,"\\.",simplify = TRUE)[,2]
+  }
+
+p <- binned_level.input %>%
+ggplot(mapping = aes(
+  x = factor(type.bin,levels = c(
+    name_boom("nucleosome.bin_", seq(1, 5)),
+    name_boom("linker.bin_", seq(1,5))
+  )),
+  y = !!variable,
+  color = sample,
+  group = sample
+)) +
+geom_line(size=1) +
+scale_color_manual(values=c("#ef858c","#5ea9d7"))+
+# geom_point() +
+theme(axis.text.x = element_text(hjust = 1, angle = 45),
+      axis.title.x = element_blank()) +
+ylab(paste0(variable))+
+   theme(
+    panel.grid = element_blank(),
+    # panel.background = element_rect(fill = 'transparent', color = 'black'),
+    panel.background = element_rect(fill = 'transparent', color = 'white'),
+    # panel.border = element_rect(fill = 'transparent', color = 'black'),
+    axis.line = element_line(colour = "black"),
+    plot.title = element_text(hjust = 0.5),
+    axis.title=element_text(face = "bold",size = 10),
+    axis.text = element_text(face = "bold", size = 10),
+    legend.text = element_text(face = "bold"),
+    legend.title = element_text(face = "bold")
+  )+
+  scale_x_discrete(labels=extract_bin)+
+geom_vline(xintercept = c("nucleosome.bin_5","linker.bin_1"), linetype = "dotdash")
+
+print(p)
+
+
+}
+
+
+visual_method("/home/user/data/lit/project/6mA/feature/iNPS/C.reinhardtii/merge/","SMRT-list-Algae",sym("GC(%)"))
+visual_method("/home/user/data/lit/project/6mA/feature/iNPS/C.reinhardtii/merge/","SMRT-list-Algae",sym("mA/(A+T)"))
+visual_method("/home/user/data/lit/project/6mA/feature/iNPS/T.thermophila/merge/","SMRT-list-Tetrahymena",sym("GC(%)"))
+visual_method("/home/user/data/lit/project/6mA/feature/iNPS/T.thermophila/merge/","SMRT-list-Tetrahymena",sym("mA/(A+T)"))
+```
+

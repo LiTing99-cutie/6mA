@@ -1,28 +1,29 @@
+#!/bin/sh 
+
 ################################################
-#File Name: /home/user/data2/lit/project/6mA/bin/binned_level.sh
+#File Name: /home/user/data2/lit/project/6mA/bin/binned_level_Pacbio.sh
 #Author: LiTing
 #Mail: liting@stu.pku.edu.cn
-#Created Time: Tue 12 Apr 2022 04:13:04 PM CST
+#Created Time: Fri 15 Apr 2022 09:07:21 PM CST
 ################################################
-
-#!/bin/sh 
 
 set -eou pipefail
 
 usage(){
-  echo "Usage: bash $(basename $0) -s sample -mA mA_list -o output_dir -c cutoff -fs genome_sorted_chrSize -fa genome_fasta -ld logDir [-h]"
+  echo "Usage: bash $(basename $0) -s sample -mA mA_list -o output_dir -c cutoff -fs genome_sorted_chrSize -fa genome_fasta -ld logDir -bd binned_bed_dir -n bin_number [-h]"
   echo "Author: LiT"
-  echo "Description: This script calculate mA level and GC/AT level in binned nucleosome and linker."
-  echo "Date: 2022-03-23"
+  echo "Description: This script calculate mA level and GC/AT level in binned nucleosome and linker, and modification are called by Pacbio SMRTlink pipeline."
+  echo "Date: 2022-04-15"
   echo "------------------------------------------------"
   echo "OPTIONS"
   echo -e "     -s|--sample [Mandatory] \t\t\t\tsample"
-  echo -e "     -mA|--mA [Mandatory] \t\t\t\tmA list"
+  echo -e "     -mA|--mA [Mandatory] \t\t\t\tmA list: same sequence name as nucleosome bed, like both chr or no chr; chr start end frequency or ipdratio; file name _*.bed, and * will bed used as list name "
   echo -e "     -o|--output_dir [Mandatory] \t\t\t\toutput directory"
   echo -e "     -fs|--fastaSize [Mandatory] \t\t\t\tgenome sorted chromosome size"
   echo -e "     -fa|--fasta [Mandatory] \t\t\t\tgenome fasta"
   echo -e "     -ld|--logDir [mandatory] \t\t\t\tlog directory"
-  echo -e "     -bd|--binned [mandatory] \t\t\t\binned bed directory"
+  echo -e "     -bd|--binned [mandatory] \t\t\t\tbinned bed directory, with bin_1.bed, bin_2.bed..., next hierarchy should be samples correspond to -s"
+  echo -e "     -n|--bin_number [mandatory] \t\t\t\tbin number"
   echo -e "     -h|--help [optional] \t\t\t\tprint this help page"
 }
 
@@ -36,7 +37,8 @@ while [[ $# -gt 0 ]]; do
         -fs|--fastaSize)           genome_sorted_chrSize=$2;shift;;
         -fa|--fasta)            genome_fasta=$2;shift;;
         -ld|--logDir)                logDir=$2;shift;;
-        -bd|--binned)               binned_dir=$2;shift;;    
+        -bd|--binned)               binned_dir=$2;shift;; 
+        -n|--n)               bin_number=$2;shift;; 
         -h)                                     usage;exit 1;;
         -|--)                                     shift; break;;
         *)                                      usage; echo -e "\n[ERR] $(date) Unkonwn option: $1"; exit 1;;
@@ -52,9 +54,8 @@ done
 [[ -n $output_dir  ]] || { usage;echo -e "\n[ERR] $(date) -o not assigned";exit; }
 [[ -n $logDir  ]] || { usage;echo -e "\n[ERR] $(date) -ld not assigned";exit; }
 [[ -n $binned_dir  ]] || { usage;echo -e "\n[ERR] $(date) -bd not assigned";exit; }
+[[ -n $bin_number  ]] || { usage;echo -e "\n[ERR] $(date) -n not assigned";exit; }
 [[ -d $output_dir ]] || mkdir -p $output_dir
-[[ -d $logDir ]] || mkdir -p $logDir
-[[ -f $logDir/run.log ]] && rm -rf $logDir/run.log
 
 echo -e "sample\t$sample"
 echo -e "mA_list\t$mA_list"
@@ -63,9 +64,13 @@ echo -e "genome_sorted_chrSize\t$genome_sorted_chrSize"
 echo -e "genome_fasta\t$genome_fasta"
 echo -e "logDir\t$logDir"
 echo -e "binned_dir\t$binned_dir"
+echo -e "bin_number\t$bin_number"
+
 
 SAMPLE=$( echo $sample | awk -F"|" -v OFS=" " '{for(i=1;i<=NF;i++) print $i}' )
 MA_LIST=$( echo $mA_list | awk -F"|" -v OFS=" " '{for(i=1;i<=NF;i++) print $i}' )
+half_bin_number=$(($bin_number/2))
+
 
     ## 2.2 6mA level ###
 
@@ -74,53 +79,48 @@ MA_LIST=$( echo $mA_list | awk -F"|" -v OFS=" " '{for(i=1;i<=NF;i++) print $i}' 
         for sample in ${SAMPLE};do
             for mA_list in ${MA_LIST};do
                 for j in nucleosome linker;do
-                    for i in `seq 1 10`;do
-                        BASENAME=`basename $mA_list`
-                        list_tmp=${BASENAME%%.*} && list=${list_tmp##*_} 
+                    for i in $(seq 1 $bin_number);do
+                        BASENAME=$(basename $mA_list)
+                        list_tmp=${BASENAME%%.*} && list=${list_tmp##*_}
                         echo "*** process ${sample}.$j.${list}.bin_$i"
-                        less $binned_dir/${sample}.$j.binned.bed | \
-                                grep $i$ | sort -k1,1 -k2,2n > \
-                                    $output_dir/${sample}.$j.bin_$i.bed
-                                
-                        less $output_dir/${sample}.$j.bin_$i.bed | awk -v OFS='\t' '{if($1=="MtDNA") print "chrM",$2,$3,$4 ; else print "chr"$1,$2,$3,$4}' | \
-                        sort -k1,1 -k2,2n > $output_dir/${sample}.$j.bin_$i.chr.bed
 
-                        bedtools intersect -wa -wb -a $output_dir/${sample}.$j.bin_$i.chr.bed -b ${mA_list} -sorted > $output_dir/${sample}.$j.${list}.bin_$i.intersect.bed &
+                        bedtools intersect -wa -wb -a $binned_dir/${sample}/${sample}.$j.bin_$i.bed -b ${mA_list} -sorted > $output_dir/${sample}.$j.${list}.bin_$i.intersect.bed &
                     done
                     wait
                 done 
             done
-        done ) >> $logDir/run.log 2>&1
+        done ) 
+
 
         time (
         for sample in ${SAMPLE};do
             for j in nucleosome linker;do
-                for i in `seq 1 10`;do
+                for i in $(seq 1 $bin_number);do
                     echo "*** process ${sample}.$j.bin_$i"
-                    bedtools nuc -fi $genome_fasta -bed $output_dir/${sample}.$j.bin_$i.bed > \
+                    bedtools nuc -fi $genome_fasta -bed $binned_dir/${sample}/${sample}.$j.bin_$i.bed > \
                     $output_dir/${sample}.$j.bin_$i.txt &
                 done
                 wait
             done 
-        done ) >> $logDir/run.log 2>&1
+        done ) 
 
         [ -f $output_dir/binned.level.txt ] && rm -rf $output_dir/binned.level.txt
 
         for sample in ${SAMPLE};do
             for mA_list in ${MA_LIST};do
                 for j in nucleosome linker;do
-                    for i in `seq 1 10`;do
-                        BASENAME=`basename $mA_list`
+                    for i in $(seq 1 $bin_number);do
+                        BASENAME=$(basename $mA_list)
                         list_tmp=${BASENAME%%.*} && list=${list_tmp##*_}
-                        mA=`less $output_dir/${sample}.$j.${list}.bin_$i.intersect.bed | wc -l`
-                        A=` sed '1d' $output_dir/${sample}.$j.bin_$i.txt | awk '{sum += $7} END {print sum}' `
-                        C=` sed '1d' $output_dir/${sample}.$j.bin_$i.txt | awk '{sum += $8} END {print sum}' `
-                        G=` sed '1d' $output_dir/${sample}.$j.bin_$i.txt | awk '{sum += $9} END {print sum}' `
-                        T=` sed '1d' $output_dir/${sample}.$j.bin_$i.txt | awk '{sum += $10} END {print sum}' `
-                        base_number=` sed '1d' $output_dir/${sample}.$j.bin_$i.txt | awk '{sum += $13} END {print sum}' `
-                        AT=` sed '1d' $output_dir/${sample}.$j.bin_$i.txt | awk '{sum += $5} END {print sum/NR}' `
-                        GC=` sed '1d' $output_dir/${sample}.$j.bin_$i.txt | awk '{sum += $6} END {print sum/NR}' `
-                        FreqSum=`less $output_dir/${sample}.$j.${list}.bin_$i.intersect.bed | awk '{sum += $8} END {print sum}'`
+                        mA=$(less $output_dir/${sample}.$j.${list}.bin_$i.intersect.bed | wc -l)
+                        A=$( sed '1d' "$output_dir"/${sample}.$j.bin_$i.txt | awk '{sum += $7} END {print sum}' )
+                        C=$( sed '1d' $output_dir/${sample}.$j.bin_$i.txt | awk '{sum += $8} END {print sum}' )
+                        G=$( sed '1d' $output_dir/${sample}.$j.bin_$i.txt | awk '{sum += $9} END {print sum}' )
+                        T=$( sed '1d' $output_dir/${sample}.$j.bin_$i.txt | awk '{sum += $10} END {print sum}' )
+                        base_number=$( sed '1d' $output_dir/${sample}.$j.bin_$i.txt | awk '{sum += $13} END {print sum}' )
+                        AT=$( sed '1d' $output_dir/${sample}.$j.bin_$i.txt | awk '{sum += $5} END {print sum/NR}' )
+                        GC=$( sed '1d' $output_dir/${sample}.$j.bin_$i.txt | awk '{sum += $6} END {print sum/NR}' )
+                        FreqSum=$(less $output_dir/${sample}.$j.${list}.bin_$i.intersect.bed | awk '{sum += $8} END {print sum}')
                         echo -e "${sample}\t$j\t${list}\tbin_$i\t${mA}\t${A}\t${C}\t${G}\t${T}\t${base_number}\t${AT}\t${GC}\t${FreqSum}" >> $output_dir/binned.level.txt
                     done
                 done
@@ -134,7 +134,7 @@ MA_LIST=$( echo $mA_list | awk -F"|" -v OFS=" " '{for(i=1;i<=NF;i++) print $i}' 
 ### merge different samples 
 
     mkdir -p $output_dir/merge   
-
+<<'!'
     for sample in ${SAMPLE};do
         for mA_list in ${MA_LIST};do
             for j in nucleosome;do
@@ -158,7 +158,28 @@ MA_LIST=$( echo $mA_list | awk -F"|" -v OFS=" " '{for(i=1;i<=NF;i++) print $i}' 
             done    
         done
     done
+!
 
+type=nucleosome
+for sample in ${SAMPLE};do
+    for mA_list in ${MA_LIST};do
+        BASENAME=$(basename $mA_list)
+        list_tmp=${BASENAME%%.*} && list=${list_tmp##*_}
+        i=0 && j=1 && k=1
+        for loop in $(seq 1 $half_bin_number);do
+            echo "*** loop $loop"
+            x=$(($half_bin_number-$i)) && y=$(($half_bin_number+$j)) && z=$(($k))
+            cat $output_dir/${sample}.$type.${list}.bin_$x.intersect.bed $output_dir/${sample}.$type.${list}.bin_$y.intersect.bed > \
+            $output_dir/merge/${sample}.$type.${list}.bin_$z.intersect.bed &
+            cat $output_dir/${sample}.$type.bin_$x.txt $output_dir/${sample}.$type.bin_$y.txt > $output_dir/merge/${sample}.$type.bin_$z.txt &
+            i=$(($i+1)) && j=$(($j+1)) && k=$(($k+1))
+        done
+    done
+done
+wait
+
+
+<<'!'
     for sample in ${SAMPLE};do
         for mA_list in ${MA_LIST};do
             for j in linker;do
@@ -182,27 +203,49 @@ MA_LIST=$( echo $mA_list | awk -F"|" -v OFS=" " '{for(i=1;i<=NF;i++) print $i}' 
             done    
         done
     done
+!
 
+
+type=linker
+for sample in ${SAMPLE};do
+    for mA_list in ${MA_LIST};do
+        BASENAME=$(basename $mA_list)
+        list_tmp=${BASENAME%%.*} && list=${list_tmp##*_}
+        i=0 && j=1 && k=$half_bin_number
+        for loop in $(seq 1 $half_bin_number);do
+            echo "*** loop $loop"
+            x=$(($half_bin_number-$i)) && y=$(($half_bin_number+$j)) && z=$(($k))
+            cat $output_dir/${sample}.$type.${list}.bin_$x.intersect.bed $output_dir/${sample}.$type.${list}.bin_$y.intersect.bed > \
+            $output_dir/merge/${sample}.$type.${list}.bin_$z.intersect.bed &
+            cat $output_dir/${sample}.$type.bin_$x.txt $output_dir/${sample}.$type.bin_$y.txt > $output_dir/merge/${sample}.$type.bin_$z.txt &
+            i=$(($i+1)) && j=$(($j+1)) && k=$(($k-1))
+        done
+    done
+done
+wait
+    
     merge_output_dir=$output_dir/merge
     [ -f $merge_output_dir/binned.level.txt ] && rm -rf $merge_output_dir/binned.level.txt
     for sample in ${SAMPLE};do
         for mA_list in ${MA_LIST};do
             for j in nucleosome linker;do
-                for i in `seq 1 5`;do
-                    BASENAME=`basename $mA_list`
+                for i in $(seq 1 $half_bin_number);do
+                    BASENAME=$(basename "$mA_list")
                     list_tmp=${BASENAME%%.*} && list=${list_tmp##*_}
-                    mA=`less $merge_output_dir/${sample}.$j.${list}.bin_$i.intersect.bed | wc -l`
-                    A=` sed '1d' $merge_output_dir/${sample}.$j.bin_$i.txt | awk '{sum += $7} END {print sum}' `
-                    C=` sed '1d' $merge_output_dir/${sample}.$j.bin_$i.txt | awk '{sum += $8} END {print sum}' `
-                    G=` sed '1d' $merge_output_dir/${sample}.$j.bin_$i.txt | awk '{sum += $9} END {print sum}' `
-                    T=` sed '1d' $merge_output_dir/${sample}.$j.bin_$i.txt | awk '{sum += $10} END {print sum}' `
-                    base_number=` sed '1d' $merge_output_dir/${sample}.$j.bin_$i.txt | awk '{sum += $13} END {print sum}' `
-                    AT=` sed '1d' $merge_output_dir/${sample}.$j.bin_$i.txt | awk '{sum += $5} END {print sum/NR}' `
-                    GC=` sed '1d' $merge_output_dir/${sample}.$j.bin_$i.txt | awk '{sum += $6} END {print sum/NR}' `
-                    FreqSum=`less $merge_output_dir/${sample}.$j.${list}.bin_$i.intersect.bed | awk '{sum += $8} END {print sum}'`
+                    mA=$(less "$merge_output_dir"/"${sample}".$j.${list}.bin_$i.intersect.bed | wc -l)
+                    A=$( sed '1d' $merge_output_dir/${sample}.$j.bin_$i.txt | awk '{sum += $7} END {print sum}' )
+                    C=$( sed '1d' $merge_output_dir/${sample}.$j.bin_$i.txt | awk '{sum += $8} END {print sum}' )
+                    G=$( sed '1d' $merge_output_dir/${sample}.$j.bin_$i.txt | awk '{sum += $9} END {print sum}' )
+                    T=$( sed '1d' "$merge_output_dir"/${sample}.$j.bin_$i.txt | awk '{sum += $10} END {print sum}' )
+                    base_number=$( sed '1d' $merge_output_dir/${sample}.$j.bin_$i.txt | awk '{sum += $13} END {print sum}' )
+                    AT=$( sed '1d' $merge_output_dir/${sample}.$j.bin_$i.txt | awk '{sum += $5} END {print sum/NR}' )
+                    GC=$( sed '1d' $merge_output_dir/${sample}.$j.bin_$i.txt | awk '{sum += $6} END {print sum/NR}' )
+                    FreqSum=$(less $merge_output_dir/${sample}.$j.${list}.bin_$i.intersect.bed | awk '{sum += $8} END {print sum}')
                     echo -e "${sample}\t$j\t${list}\tbin_$i\t${mA}\t${A}\t${C}\t${G}\t${T}\t${base_number}\t${AT}\t${GC}\t${FreqSum}" >> $merge_output_dir/binned.level.txt
                 done
             done 
         done
     done
 ### EO　merge different samples 
+
+echo "done"

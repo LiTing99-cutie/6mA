@@ -25,12 +25,14 @@ while (<IN1>){
                 print SH <<END_OF_STRING;
 
 do
-cat $pwd/$hea $pwd/$op/$core/\$subread/\$subread.sam |samtools view -S -b >$pwd/$op/$core/\$subread/\$subread.bam
+. "/home/user/BGM/lit/anaconda3/etc/profile.d/conda.sh"
+conda activate pbalign
+cat $hea $pwd/$op/$core/\$subread/\$subread.sam |samtools view -S -b >$pwd/$op/$core/\$subread/\$subread.bam
 samtools faidx $pwd/$op/$core/\$subread/\$subread.fa
-pbalign --quiet $pwd/$op/$core/\$subread/\$subread.bam $pwd/$op/$core/\$subread/\$subread.fa $pwd/$op/$core/\$subread/\$subread.pbalign.bam
+pbalign --quiet --tmpDir /home/user/data2/lit/tmp/ $pwd/$op/$core/\$subread/\$subread.bam $pwd/$op/$core/\$subread/\$subread.fa $pwd/$op/$core/\$subread/\$subread.pbalign.bam
 ipdSummary $pwd/$op/$core/\$subread/\$subread.pbalign.bam --reference $pwd/$op/$core/\$subread/\$subread.fa --quiet --identify m6A,m4C --methylFraction --bigwig $pwd/$op/$core/\$subread/\$subread.bigwig --gff $pwd/$op/$core/\$subread/\$subread.gff --csv $pwd/$op/$core/\$subread/\$subread.csv
 awk -F "," '{print \$1"\\t"\$2"\\t"\$3"\\t"\$4"\\t"\$10"\\t"\$8"\\t"\$6"\\t"\$9"\\t"\$7"\\t"\$5}' $pwd/$op/$core/\$subread/\$subread.csv|sed -e 's/\"//g'  > $pwd/$op/$core/\$subread/\$subread.ipd.out
-perl ~/code/post_ipd_fasta_filter.pl $pwd/$op/$core/\$subread/\$subread.ipd.out $pwd/$op/$core/\$subread/\$subread.fa 10 >$pwd/$op/$core/\$subread/\$subread.ipd.out.middle
+perl /home/user/data2/lit/project/6mA/reproduce/6mASCOPE/code/post_ipd_fasta_filter.pl $pwd/$op/$core/\$subread/\$subread.ipd.out $pwd/$op/$core/\$subread/\$subread.fa 10 >$pwd/$op/$core/\$subread/\$subread.ipd.out.middle
 cat $pwd/$op/$core/\$subread/\$subread.ipd.out.middle >>$pwd/$op/$core/$op.$core.ipd.out
 done
 END_OF_STRING
@@ -61,12 +63,14 @@ close IN1;
 print SH <<END_OF_STRING;
 
 do
-cat $pwd/$hea $pwd/$op/$core/\$subread/\$subread.sam |samtools view -S -b >$pwd/$op/$core/\$subread/\$subread.bam
+. "/home/user/BGM/lit/anaconda3/etc/profile.d/conda.sh"
+conda activate pbalign
+cat $hea $pwd/$op/$core/\$subread/\$subread.sam |samtools view -S -b >$pwd/$op/$core/\$subread/\$subread.bam
 samtools faidx $pwd/$op/$core/\$subread/\$subread.fa
-pbalign --quiet $pwd/$op/$core/\$subread/\$subread.bam $pwd/$op/$core/\$subread/\$subread.fa $pwd/$op/$core/\$subread/\$subread.pbalign.bam
+pbalign --quiet --tmpDir /home/user/data2/lit/tmp/ $pwd/$op/$core/\$subread/\$subread.bam $pwd/$op/$core/\$subread/\$subread.fa $pwd/$op/$core/\$subread/\$subread.pbalign.bam
 ipdSummary $pwd/$op/$core/\$subread/\$subread.pbalign.bam --reference $pwd/$op/$core/\$subread/\$subread.fa --quiet --identify m6A,m4C --methylFraction --bigwig $pwd/$op/$core/\$subread/\$subread.bigwig --gff $pwd/$op/$core/\$subread/\$subread.gff --csv $pwd/$op/$core/\$subread/\$subread.csv
 awk -F "," '{print \$1"\\t"\$2"\\t"\$3"\\t"\$4"\\t"\$10"\\t"\$8"\\t"\$6"\\t"\$9"\\t"\$7"\\t"\$5}' $pwd/$op/$core/\$subread/\$subread.csv|sed -e 's/\"//g'  > $pwd/$op/$core/\$subread/\$subread.ipd.out
-perl  ~/code/post_ipd_fasta_filter.pl $pwd/$op/$core/\$subread/\$subread.ipd.out $pwd/$op/$core/\$subread/\$subread.fa 10 >$pwd/$op/$core/\$subread/\$subread.ipd.out.middle
+perl  /home/user/data2/lit/project/6mA/reproduce/6mASCOPE/code/post_ipd_fasta_filter.pl $pwd/$op/$core/\$subread/\$subread.ipd.out $pwd/$op/$core/\$subread/\$subread.fa 10 >$pwd/$op/$core/\$subread/\$subread.ipd.out.middle
 cat $pwd/$op/$core/\$subread/\$subread.ipd.out.middle >>$pwd/$op/$core/$op.$core.ipd.out
 done
 END_OF_STRING

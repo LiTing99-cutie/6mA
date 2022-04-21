@@ -102,7 +102,7 @@ if [[ -d $output.tmp___shell ]]; then
 fi
 
 samtools view -H $raw >$raw.head.tmp__
-perl /home/6mASCOPE/code/split_SM.pl $fasta $raw $raw.head.tmp__ $output.tmp__ 500
+perl /home/user/data2/lit/project/6mA/reproduce/6mASCOPE/code/split_SM.pl $fasta $raw $raw.head.tmp__ $output.tmp__ 500
 cat $output.tmp___shell/$output.tmp__.run.sh|parallel -j $nb_threads
 sh $output.tmp___shell/$output.tmp__.combine.sh
 mv $output.tmp__/$output.tmp__.ipd.out $output

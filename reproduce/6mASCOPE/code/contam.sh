@@ -105,20 +105,24 @@ fi
 mkdir $ccsbase.$refbase.mapped $ccsbase.$refbase.unmapped
 echo -n "["`date`"] "
 echo "Map to the genome of interest..."
-minimap2 -x sr -N 20 -a -o $ccsbase.$refbase.mapped/$ccs.goi.minimap2.out $ref $ccs 2>/dev/null
-samtools view -F 4 $ccsbase.$refbase.mapped/$ccs.goi.minimap2.out >$ccsbase.$refbase.mapped/$ccs.goi.ref.minimap2.mapped
+minimap2 -x sr -N 20 -a -o $ccsbase.$refbase.mapped/$ccsbase.goi.minimap2.out $ref $ccs 2>/dev/null
+
+ref=/home/user/data/lit/database/public/genome/ce11/pengq/Caenorhabditis_elegans.WBcel235.dna.fa
+ccs=/home/user/data/lit/project/6mA/reproduce/output/6mASCOPE/SMRT_1/SMRT_1.ccs.fasta
+minimap2 -x sr -N 20 -a $ref $ccs > SMRT_1.ccs.fasta.Caenorhabditis_elegans.WBcel235.dna.fa.mapped/SMRT_1.ccs.fasta.goi.minimap2.out 2>/dev/null
+samtools view -F 4 $ccsbase.$refbase.mapped/$ccsbase.goi.minimap2.out >$ccsbase.$refbase.mapped/$ccsbase.goi.ref.minimap2.mapped
 echo -n "["`date`"] "
 echo "Separate unmapped molecules..." 
 
-perl ~/code/remove_chimeric_reads.pl $ccs $ccsbase.$refbase.mapped/$ccs.goi.minimap2.out $ccsbase.$refbase.mapped/$ccs.remove.chimeric
+perl /home/user/data2/lit/project/6mA/reproduce/6mASCOPE/code/remove_chimeric_reads.pl $ccs $ccsbase.$refbase.mapped/$ccsbase.goi.minimap2.out $ccsbase.$refbase.mapped/$ccsbase.remove.chimeric
 
-rm $ccsbase.$refbase.mapped/$ccs.goi.minimap2.out
-perl ~/code/sep_species_ccs_fasta.pl $ccsbase.$refbase.mapped/$ccs.goi.ref.minimap2.mapped $ccsbase.$refbase.mapped/$ccs.remove.chimeric $ccsbase.$refbase.mapped/$ccs.goi $ccsbase.$refbase.unmapped/$ccs.non.goi
+rm $ccsbase.$refbase.mapped/$ccsbase.goi.minimap2.out
+perl /home/user/data2/lit/project/6mA/reproduce/6mASCOPE/code/sep_species_ccs_fasta.pl $ccsbase.$refbase.mapped/$ccsbase.goi.ref.minimap2.mapped $ccsbase.$refbase.mapped/$ccsbase.remove.chimeric $ccsbase.$refbase.mapped/$ccsbase.goi $ccsbase.$refbase.unmapped/$ccsbase.non.goi
 allspecies=`grep ">" -c $ccs`
-after_chimeric_filter=`grep ">" -c $ccsbase.$refbase.mapped/$ccs.remove.chimeric`
+after_chimeric_filter=`grep ">" -c $ccsbase.$refbase.mapped/$ccsbase.remove.chimeric`
 chimeric_reads=`expr $allspecies - $after_chimeric_filter`
-inspecies=`grep ">" -c $ccsbase.$refbase.mapped/$ccs.goi`
-outspecies=`grep ">" -c $ccsbase.$refbase.unmapped/$ccs.non.goi`
+inspecies=`grep ">" -c $ccsbase.$refbase.mapped/$ccsbase.goi`
+outspecies=`grep ">" -c $ccsbase.$refbase.unmapped/$ccsbase.non.goi`
 echo -e "Remove $chimeric_reads possible inter-species chimeric reads for further analysis"  >$output
 echo -e "#total_CCS\tmapped_to_goi\tcontaminants"  >>$output
 inspecies_percent=$(awk -v i=$inspecies -v t=$after_chimeric_filter 'BEGIN { print i/t*100 }')
@@ -126,13 +130,13 @@ outspecies_percent=$(awk -v o=$outspecies -v t=$after_chimeric_filter 'BEGIN { p
 echo -e "$after_chimeric_filter\t$inspecies ($inspecies_percent%)\t$outspecies ($outspecies_percent%)" >>$output
 echo -n "["`date`"] "
 echo "Search unmapped molecules in NT database..."
-blastn -query $ccsbase.$refbase.unmapped/$ccs.non.goi -db /home/6mASCOPE/database/nt-pre-build/nt -out $ccsbase.$refbase.unmapped/$ccs.non.goi.nt.blastn -outfmt 5 -evalue 1e-5 -num_threads 5 -max_target_seqs 1 2>/dev/null
-python ~/code/blastxml2tab.py -c ext $ccsbase.$refbase.unmapped/$ccs.non.goi.nt.blastn >$ccsbase.$refbase.unmapped/$ccs.non.goi.nt.blastn.txt
-rm $ccsbase.$refbase.unmapped/$ccs.non.goi.nt.blastn
+blastn -query $ccsbase.$refbase.unmapped/$ccsbase.non.goi -db /home/user/data2/lit/6mASCOPE/home/6mASCOPE/database/nt-pre-build/nt -out $ccsbase.$refbase.unmapped/$ccsbase.non.goi.nt.blastn -outfmt 5 -evalue 1e-5 -num_threads 5 -max_target_seqs 1 2>/dev/null
+python /home/user/data2/lit/project/6mA/reproduce/6mASCOPE/code/blastxml2tab.py -c ext $ccsbase.$refbase.unmapped/$ccsbase.non.goi.nt.blastn >$ccsbase.$refbase.unmapped/$ccsbase.non.goi.nt.blastn.txt
+rm $ccsbase.$refbase.unmapped/$ccsbase.non.goi.nt.blastn
 echo >>$output
 echo "Top 50 mapped species outside goi reference" >>$output
 echo -e "#Count\tSpecies" >>$output
-cut -f 1,25 $ccsbase.$refbase.unmapped/$ccs.non.goi.nt.blastn.txt|sort -u|cut -f 2|cut -d " " -f 1,2|sort|uniq -c|sort -nr|head -50 >>$output
+cut -f 1,25 $ccsbase.$refbase.unmapped/$ccsbase.non.goi.nt.blastn.txt|sort -u|cut -f 2|cut -d " " -f 1,2|sort|uniq -c|sort -nr|head -50 >>$output
 
 echo -n "["`date`"] "
 echo "Done."

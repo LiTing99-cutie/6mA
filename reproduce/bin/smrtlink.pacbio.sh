@@ -55,20 +55,20 @@ ${output_dir}/pbmm2/${subreadBamName}.ref.bam \
 --bigwig ${output_dir}/pbmm2/ref/${subreadBamName}.bigwig ) \
 > ${log_dir}/pbmm2/ipdSummary.${subreadBamName}.ref.log 2>&1 
 
-time ( pbmm2 align -j 50 \
-$ccs_fasta \
-$subreadBam \
-${output_dir}/pbmm2/${subreadBamName}.ccs.bam ) \
-> ${log_dir}/pbmm2/pbmm2.${subreadBamName}.ccs.log 2>&1 
+# time ( pbmm2 align -j 50 \
+# $ccs_fasta \
+# $subreadBam \
+# ${output_dir}/pbmm2/${subreadBamName}.ccs.bam ) \
+# > ${log_dir}/pbmm2/pbmm2.${subreadBamName}.ccs.log 2>&1 
 
-pbindex /home/user/data2/lit/project/6mA/reproduce/output/Pacbio/Algae/pbmm2/Algae.ccs.bam
+# pbindex /home/user/data2/lit/project/6mA/reproduce/output/Pacbio/Algae/pbmm2/Algae.ccs.bam
 
-time ( ipdSummary --numWorkers 50 \
-${output_dir}/pbmm2/${subreadBamName}.ccs.bam \
---reference $ccs_fasta \
---identify m6A,m4C \
---methylFraction \
---gff ${output_dir}/pbmm2/ccs/${subreadBamName}.gff \
---csv ${output_dir}/pbmm2/ccs/${subreadBamName}.csv \
---bigwig ${output_dir}/pbmm2/ccs/${subreadBamName}.bigwig ) \
-> ${log_dir}/pbmm2/ipdSummary.${subreadBamName}.ccs.log 2>&1 
+# time ( ipdSummary --numWorkers 50 \
+# ${output_dir}/pbmm2/${subreadBamName}.ccs.bam \
+# --reference $ccs_fasta \
+# --identify m6A,m4C \
+# --methylFraction \
+# --gff ${output_dir}/pbmm2/ccs/${subreadBamName}.gff \
+# --csv ${output_dir}/pbmm2/ccs/${subreadBamName}.csv \
+# --bigwig ${output_dir}/pbmm2/ccs/${subreadBamName}.bigwig ) \
+# > ${log_dir}/pbmm2/ipdSummary.${subreadBamName}.ccs.log 2>&1 

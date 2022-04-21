@@ -20,3 +20,10 @@ Figure out 6mASCOPE, the input, the output and how it works
 calculate GC percent in binned nucleosome and linker
 written referred to /home/user/data2/lit/project/6mA/reproduce/bin/run.C.reinhardti.sh 
 stat motif feature in the future maybe
+
+### /home/user/data2/lit/project/6mA/reproduce/bin/6mASCOPE.binned_level.update.sh
+caculate 6mA level based on 6mASCOPE
+
+### /home/user/data2/lit/project/6mA/reproduce/bin/binned_level_Pacbio.sh
+written based on /home/user/data2/lit/project/6mA/bin/binned_level.sh
+actually these two can be merged
