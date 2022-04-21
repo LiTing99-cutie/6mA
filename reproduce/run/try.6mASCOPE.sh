@@ -79,3 +79,15 @@ singularity run -w /home/user/data2/lit/6mASCOPE/
 
 # work
 singularity run --no-home -w /home/user/data2/lit/6mASCOPE/ 
+
+./6mASCOPE_s/.singularity.d
+
+./tmp_1/6mASCOPE/.singularity.d
+
+#! /bin/bash
+source /home/6mASCOPE/.bashrc 
+eval "$(conda shell.bash hook)"
+conda activate 6mASCOPE
+6mASCOPE $@
+
+nohup code/ipd.sh -r /home/user/data2/lit/DATA/project/6mA/reproduce/rawdata/Pacbio/bam/Algae.subreads.bam -f /home/user/data2/lit/DATA/project/6mA/reproduce/output/6mASCOPE/Algae/Algae.ccs.fasta -o Algae.Ipd.out -p 40 >ipd.Algae.log 2>&1 & 
